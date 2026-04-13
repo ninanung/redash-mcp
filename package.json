@@ -1,0 +1,28 @@
+{
+  "name": "redash-mcp",
+  "version": "0.1.0",
+  "description": "Redash MCP server with schema caching and column exploration",
+  "type": "module",
+  "bin": {
+    "redash-mcp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc && chmod +x dist/cli.js",
+    "start": "node dist/cli.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.1.0",
+    "axios": "^1.6.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
