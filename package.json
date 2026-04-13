@@ -7,9 +7,11 @@
     "redash-mcp": "./dist/cli.js"
   },
   "main": "./dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc && chmod +x dist/cli.js",
+    "build": "tsc && tsc-alias && chmod +x dist/cli.js",
     "start": "node dist/cli.js",
     "dev": "tsc --watch"
   },
@@ -20,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.2.2"
   },
   "engines": {

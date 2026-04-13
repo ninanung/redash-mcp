@@ -4,10 +4,10 @@ import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { RedashClient } from "./redash-client.js";
-import { SchemaCache } from "./schema-cache.js";
-import { MetadataCache } from "./metadata-cache.js";
-import { getToolDefinitions, handleToolCall } from "./tools.js";
+import { RedashClient } from "@/redash-client.js";
+import { SchemaCache } from "@/schema-cache.js";
+import { MetadataCache } from "@/metadata-cache.js";
+import { getToolDefinitions, handleToolCall } from "@/tools.js";
 
 const REDASH_URL = process.env.REDASH_URL;
 const REDASH_API_KEY = process.env.REDASH_API_KEY;

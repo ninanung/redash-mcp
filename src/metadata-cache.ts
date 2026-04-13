@@ -1,40 +1,17 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-
-/**
- * 컬럼 탐색 결과 캐시
- */
-export interface ColumnInfo {
-  type: "integer" | "varchar";
-  values: { val: string; cnt: number }[];
-  updatedAt: string;
-}
-
-/**
- * 매핑 테이블 캐시
- */
-export interface MappingInfo {
-  mappingTable: string;
-  entries: Record<string, string>[]; // [{ id: "1", state: "주문완료" }, ...]
-  updatedAt: string;
-}
-
-/**
- * 테이블 추천 캐시
- */
-export interface TableRecommendation {
-  recommended: string;
-  reason: string;
-  avoid?: Record<string, string>; // { "table_name": "사유" }
-  updatedAt: string;
-}
-
-interface CacheData {
-  columns: Record<string, ColumnInfo>; // key: "schema.table.column"
-  mappings: Record<string, MappingInfo>; // key: "schema.table.column"
-  tables: Record<string, TableRecommendation>; // key: keyword (e.g. "membership")
-}
+export type {
+  ColumnInfo,
+  MappingInfo,
+  TableRecommendation,
+} from "@/interfaces/metadata-cache.js";
+import type {
+  ColumnInfo,
+  MappingInfo,
+  TableRecommendation,
+  CacheData,
+} from "@/interfaces/metadata-cache.js";
 
 const CACHE_DIR = path.join(os.homedir(), ".redash-mcp");
 const CACHE_FILE = path.join(CACHE_DIR, "metadata-cache.json");
