@@ -1,7 +1,17 @@
 {
-  "name": "redash-mcp",
-  "version": "0.1.0",
+  "name": "@seungje.jun/redash-mcp",
+  "version": "0.0.1",
   "description": "Redash MCP server with schema caching and column exploration",
+  "keywords": [
+    "redash",
+    "mcp",
+    "model-context-protocol",
+    "sql",
+    "query",
+    "schema",
+    "claude",
+    "ai"
+  ],
   "type": "module",
   "bin": {
     "redash-mcp": "./dist/cli.js"

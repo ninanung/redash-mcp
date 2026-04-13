@@ -179,7 +179,7 @@ export async function handleToolCall(
     case "get_schema":
       return handleGetSchema(args as GetSchemaArgs, client, schemaCache, metadataCache);
     case "execute_query":
-      return handleExecuteQuery(args as ExecuteQueryArgs, client);
+      return handleExecuteQuery(args as ExecuteQueryArgs, client, schemaCache);
     case "explore_column":
       return handleExploreColumn(args as ExploreColumnArgs, client, metadataCache);
     case "find_mapping":
