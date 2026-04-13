@@ -1,6 +1,6 @@
 {
   "name": "@seungje.jun/redash-mcp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Redash MCP server with schema caching and column exploration",
   "keywords": [
     "redash",
