@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { RedashClient } from "./redash-client.js";
 import { SchemaCache } from "./schema-cache.js";
+import { MetadataCache } from "./metadata-cache.js";
 
 // JSON Schema 타입 정의
 interface JsonSchema {
@@ -153,6 +154,21 @@ export function getToolDefinitions(): ToolDefinition[] {
         required: ["data_source_id", "name", "query"],
       },
     },
+    {
+      name: "get_cache",
+      description:
+        "저장된 메타데이터 캐시를 조회합니다. 컬럼 타입/값, 매핑 테이블, 추천 테이블 정보를 확인할 수 있습니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          keyword: {
+            type: "string",
+            description:
+              "검색 키워드 (예: 'membership', 'order_total.lastest_state'). 없으면 전체 요약.",
+          },
+        },
+      },
+    },
   ];
 }
 
@@ -160,21 +176,24 @@ export async function handleToolCall(
   name: string,
   args: Record<string, unknown>,
   client: RedashClient,
-  schemaCache: SchemaCache
+  schemaCache: SchemaCache,
+  metadataCache: MetadataCache
 ): Promise<ToolResult> {
   switch (name) {
     case "list_data_sources":
       return handleListDataSources(client);
     case "get_schema":
-      return handleGetSchema(args, client, schemaCache);
+      return handleGetSchema(args, client, schemaCache, metadataCache);
     case "execute_query":
       return handleExecuteQuery(args, client);
     case "explore_column":
-      return handleExploreColumn(args, client);
+      return handleExploreColumn(args, client, metadataCache);
     case "find_mapping":
-      return handleFindMapping(args, client, schemaCache);
+      return handleFindMapping(args, client, schemaCache, metadataCache);
     case "save_query":
       return handleSaveQuery(args, client);
+    case "get_cache":
+      return handleGetCache(args, metadataCache);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
@@ -198,11 +217,30 @@ async function handleListDataSources(
 async function handleGetSchema(
   args: Record<string, unknown>,
   client: RedashClient,
-  schemaCache: SchemaCache
+  schemaCache: SchemaCache,
+  metadataCache: MetadataCache
 ): Promise<ToolResult> {
   const dataSourceId = args.data_source_id as number;
   const keywords = args.keywords as string[] | undefined;
   const refresh = args.refresh as boolean | undefined;
+
+  // 키워드가 있으면 테이블 추천 캐시 확인
+  const recommendations: string[] = [];
+  if (keywords && keywords.length > 0 && !refresh) {
+    for (const kw of keywords) {
+      const rec = metadataCache.getTableRecommendation(kw);
+      if (rec) {
+        const avoidInfo = rec.avoid
+          ? Object.entries(rec.avoid)
+              .map(([t, reason]) => `  ⚠ ${t}: ${reason}`)
+              .join("\n")
+          : "";
+        recommendations.push(
+          `[캐시 추천] "${kw}" → ${rec.recommended} (${rec.reason})${avoidInfo ? "\n" + avoidInfo : ""}`
+        );
+      }
+    }
+  }
 
   const tables = await schemaCache.getSchema(client, dataSourceId, refresh);
 
@@ -222,6 +260,11 @@ async function handleGetSchema(
     };
   }
 
+  const recPrefix =
+    recommendations.length > 0
+      ? recommendations.join("\n") + "\n\n"
+      : "";
+
   // 테이블이 100개 초과면 이름만 반환
   if (filtered.length > 100) {
     const names = schemaCache.getTableNames(filtered);
@@ -229,7 +272,7 @@ async function handleGetSchema(
       content: [
         {
           type: "text",
-          text: `${filtered.length}개 테이블 (이름만 표시):\n${names.join("\n")}`,
+          text: `${recPrefix}${filtered.length}개 테이블 (이름만 표시):\n${names.join("\n")}`,
         },
       ],
     };
@@ -246,7 +289,7 @@ async function handleGetSchema(
     content: [
       {
         type: "text",
-        text: `${prefix}${filtered.length}개 테이블:\n${output}`,
+        text: `${recPrefix}${prefix}${filtered.length}개 테이블:\n${output}`,
       },
     ],
   };
@@ -296,7 +339,8 @@ async function handleExecuteQuery(
 
 async function handleExploreColumn(
   args: Record<string, unknown>,
-  client: RedashClient
+  client: RedashClient,
+  metadataCache: MetadataCache
 ): Promise<ToolResult> {
   const dataSourceId = args.data_source_id as number;
   const columns = args.columns as {
@@ -305,41 +349,78 @@ async function handleExploreColumn(
     partition_filter?: string;
   }[];
   const limit = (args.limit as number) ?? 20;
+  const refresh = (args as Record<string, unknown>).refresh as boolean | undefined;
 
-  const parts = columns.map((c) => {
-    const where = c.partition_filter ? `WHERE ${c.partition_filter}` : "";
-    return `SELECT '${c.table}.${c.column}' AS col, CAST(${c.column} AS varchar) AS val, COUNT(*) AS cnt FROM ${c.table} ${where} GROUP BY CAST(${c.column} AS varchar) ORDER BY cnt DESC LIMIT ${limit}`;
-  });
+  // 캐시 확인: refresh가 아니면 캐시된 컬럼은 스킵
+  const cached: string[] = [];
+  const toQuery: typeof columns = [];
 
-  const sql = parts.join("\nUNION ALL\n");
-  const result = await client.executeAdhocQuery(sql, dataSourceId);
-  const rows = result.query_result.data.rows;
-
-  // 컬럼별 그룹핑
-  const grouped = new Map<
-    string,
-    { val: string; cnt: number }[]
-  >();
-  for (const row of rows) {
-    const col = row.col as string;
-    if (!grouped.has(col)) grouped.set(col, []);
-    grouped.get(col)!.push({
-      val: row.val as string,
-      cnt: row.cnt as number,
-    });
+  for (const c of columns) {
+    const key = `${c.table}.${c.column}`;
+    const hit = !refresh ? metadataCache.getColumn(key) : null;
+    if (hit) {
+      cached.push(key);
+    } else {
+      toQuery.push(c);
+    }
   }
 
-  // 타입 추정 및 출력
+  // 캐시된 결과 먼저 출력 준비
   const output: string[] = [];
-  for (const [col, values] of grouped) {
-    const allNumeric = values.every((v) => /^\d+$/.test(v.val));
-    const typeHint = allNumeric
-      ? "integer (숫자 리터럴로 비교)"
-      : "varchar (문자열로 비교)";
 
-    output.push(`\n[${col}] (추정 타입: ${typeHint})`);
-    for (const v of values) {
+  for (const key of cached) {
+    const info = metadataCache.getColumn(key)!;
+    const typeHint =
+      info.type === "integer"
+        ? "integer (숫자 리터럴로 비교)"
+        : "varchar (문자열로 비교)";
+    output.push(`\n[${key}] [캐시됨] (추정 타입: ${typeHint})`);
+    for (const v of info.values) {
       output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+    }
+  }
+
+  // 캐시 미스된 컬럼만 실제 조회
+  if (toQuery.length > 0) {
+    const parts = toQuery.map((c) => {
+      const where = c.partition_filter ? `WHERE ${c.partition_filter}` : "";
+      return `SELECT '${c.table}.${c.column}' AS col, CAST(${c.column} AS varchar) AS val, COUNT(*) AS cnt FROM ${c.table} ${where} GROUP BY CAST(${c.column} AS varchar) ORDER BY cnt DESC LIMIT ${limit}`;
+    });
+
+    const sql = parts.join("\nUNION ALL\n");
+    const result = await client.executeAdhocQuery(sql, dataSourceId);
+    const rows = result.query_result.data.rows;
+
+    // 컬럼별 그룹핑
+    const grouped = new Map<string, { val: string; cnt: number }[]>();
+    for (const row of rows) {
+      const col = row.col as string;
+      if (!grouped.has(col)) grouped.set(col, []);
+      grouped.get(col)!.push({
+        val: row.val as string,
+        cnt: row.cnt as number,
+      });
+    }
+
+    // 타입 추정, 출력, 캐시 저장
+    for (const [col, values] of grouped) {
+      const allNumeric = values.every((v) => /^\d+$/.test(v.val));
+      const colType = allNumeric ? "integer" : "varchar";
+      const typeHint = allNumeric
+        ? "integer (숫자 리터럴로 비교)"
+        : "varchar (문자열로 비교)";
+
+      output.push(`\n[${col}] [새로 조회] (추정 타입: ${typeHint})`);
+      for (const v of values) {
+        output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+      }
+
+      // 캐시 저장
+      metadataCache.setColumn(col, {
+        type: colType,
+        values,
+        updatedAt: new Date().toISOString().slice(0, 10),
+      });
     }
   }
 
@@ -349,11 +430,32 @@ async function handleExploreColumn(
 async function handleFindMapping(
   args: Record<string, unknown>,
   client: RedashClient,
-  schemaCache: SchemaCache
+  schemaCache: SchemaCache,
+  metadataCache: MetadataCache
 ): Promise<ToolResult> {
   const dataSourceId = args.data_source_id as number;
   const table = args.table as string;
   const column = args.column as string;
+  const refresh = (args as Record<string, unknown>).refresh as boolean | undefined;
+
+  const cacheKey = `${table}.${column}`;
+
+  // 캐시 확인
+  if (!refresh) {
+    const hit = metadataCache.getMapping(cacheKey);
+    if (hit) {
+      const header = Object.keys(hit.entries[0] ?? {}).join(" | ");
+      const rows = hit.entries.map((r) => Object.values(r).join(" | "));
+      return {
+        content: [
+          {
+            type: "text",
+            text: `[캐시됨] 매핑 테이블: ${hit.mappingTable}\n\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
+          },
+        ],
+      };
+    }
+  }
 
   const tables = await schemaCache.getSchema(client, dataSourceId);
 
@@ -424,11 +526,26 @@ async function handleFindMapping(
     data.columns.map((c) => String(r[c.name] ?? "")).join(" | ")
   );
 
+  // 캐시 저장
+  const entries = data.rows.map((r) => {
+    const entry: Record<string, string> = {};
+    for (const c of data.columns) {
+      entry[c.name] = String(r[c.name] ?? "");
+    }
+    return entry;
+  });
+
+  metadataCache.setMapping(cacheKey, {
+    mappingTable,
+    entries,
+    updatedAt: new Date().toISOString().slice(0, 10),
+  });
+
   return {
     content: [
       {
         type: "text",
-        text: `매핑 테이블: ${mappingTable}\n${candidates.length > 1 ? `(다른 후보: ${candidates.slice(1).join(", ")})\n` : ""}\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
+        text: `[새로 조회] 매핑 테이블: ${mappingTable}\n${candidates.length > 1 ? `(다른 후보: ${candidates.slice(1).join(", ")})\n` : ""}\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
       },
     ],
   };
@@ -453,4 +570,78 @@ async function handleSaveQuery(
       },
     ],
   };
+}
+
+async function handleGetCache(
+  args: Record<string, unknown>,
+  metadataCache: MetadataCache
+): Promise<ToolResult> {
+  const keyword = args.keyword as string | undefined;
+
+  if (!keyword) {
+    return {
+      content: [{ type: "text", text: metadataCache.getSummary() }],
+    };
+  }
+
+  const output: string[] = [];
+
+  // 컬럼 캐시 검색
+  const columns = metadataCache.searchColumns(keyword);
+  if (Object.keys(columns).length > 0) {
+    output.push("## 컬럼 정보");
+    for (const [key, info] of Object.entries(columns)) {
+      const typeHint =
+        info.type === "integer"
+          ? "integer (숫자 리터럴로 비교)"
+          : "varchar (문자열로 비교)";
+      output.push(`\n[${key}] (${typeHint}) — ${info.updatedAt}`);
+      for (const v of info.values) {
+        output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+      }
+    }
+  }
+
+  // 매핑 캐시 검색
+  const mappings = metadataCache.searchMappings(keyword);
+  if (Object.keys(mappings).length > 0) {
+    output.push("\n## 매핑 정보");
+    for (const [key, info] of Object.entries(mappings)) {
+      const header = Object.keys(info.entries[0] ?? {}).join(" | ");
+      const rows = info.entries.map((r) => Object.values(r).join(" | "));
+      output.push(`\n[${key}] → ${info.mappingTable} — ${info.updatedAt}`);
+      output.push(header);
+      output.push("─".repeat(header.length));
+      output.push(rows.join("\n"));
+    }
+  }
+
+  // 테이블 추천 검색
+  const recs = metadataCache.searchTableRecommendations(keyword);
+  if (Object.keys(recs).length > 0) {
+    output.push("\n## 테이블 추천");
+    for (const [key, rec] of Object.entries(recs)) {
+      output.push(
+        `\n"${key}" → ${rec.recommended} (${rec.reason}) — ${rec.updatedAt}`
+      );
+      if (rec.avoid) {
+        for (const [t, reason] of Object.entries(rec.avoid)) {
+          output.push(`  ⚠ 비추천: ${t} — ${reason}`);
+        }
+      }
+    }
+  }
+
+  if (output.filter((l) => l.trim()).length === 0) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `"${keyword}"와 일치하는 캐시가 없습니다.\n${metadataCache.getSummary()}`,
+        },
+      ],
+    };
+  }
+
+  return { content: [{ type: "text", text: output.join("\n") }] };
 }

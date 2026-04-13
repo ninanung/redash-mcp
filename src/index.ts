@@ -6,6 +6,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { RedashClient } from "./redash-client.js";
 import { SchemaCache } from "./schema-cache.js";
+import { MetadataCache } from "./metadata-cache.js";
 import { getToolDefinitions, handleToolCall } from "./tools.js";
 
 const REDASH_URL = process.env.REDASH_URL;
@@ -20,6 +21,7 @@ if (!REDASH_URL || !REDASH_API_KEY) {
 
 const client = new RedashClient(REDASH_URL, REDASH_API_KEY);
 const schemaCache = new SchemaCache();
+const metadataCache = new MetadataCache();
 
 const server = new Server(
   { name: "redash-mcp", version: "0.1.0" },
@@ -34,7 +36,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
-    return await handleToolCall(name, args ?? {}, client, schemaCache);
+    return await handleToolCall(name, args ?? {}, client, schemaCache, metadataCache);
   } catch (error) {
     return {
       content: [
