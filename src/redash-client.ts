@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { AxiosInstance } from "axios";
 export type {
   RedashColumn,
   RedashQueryResult,
@@ -11,6 +11,9 @@ import type {
   RedashDataSource,
   RedashSchemaTable,
   RedashSavedQuery,
+  RedashSchemaResponse,
+  RedashJobResponse,
+  RedashJobStatusResponse,
 } from "@/interfaces/redash-client.js";
 
 export class RedashClient {
@@ -25,12 +28,12 @@ export class RedashClient {
   }
 
   async listDataSources(): Promise<RedashDataSource[]> {
-    const res = await this.client.get("/api/data_sources");
+    const res = await this.client.get<RedashDataSource[]>("/api/data_sources");
     return res.data;
   }
 
   async getSchema(dataSourceId: number): Promise<RedashSchemaTable[]> {
-    const res = await this.client.get(
+    const res = await this.client.get<RedashSchemaResponse>(
       `/api/data_sources/${dataSourceId}/schema`
     );
     return res.data.schema ?? [];
@@ -47,13 +50,13 @@ export class RedashClient {
       parameters: {},
     };
 
-    const res = await this.client.post("/api/query_results", payload);
+    const res = await this.client.post<RedashJobResponse>("/api/query_results", payload);
 
     if (res.data.job) {
       return await this.pollJob(res.data.job.id);
     }
 
-    return res.data;
+    return { query_result: res.data.query_result! };
   }
 
   async saveQuery(
@@ -61,7 +64,7 @@ export class RedashClient {
     query: string,
     dataSourceId: number
   ): Promise<RedashSavedQuery> {
-    const res = await this.client.post("/api/queries", {
+    const res = await this.client.post<RedashSavedQuery>("/api/queries", {
       name,
       query,
       data_source_id: dataSourceId,
@@ -77,17 +80,17 @@ export class RedashClient {
     const start = Date.now();
 
     while (Date.now() - start < timeout) {
-      const res = await this.client.get(`/api/jobs/${jobId}`);
+      const res = await this.client.get<RedashJobStatusResponse>(`/api/jobs/${jobId}`);
       const job = res.data.job;
 
       if (job.status === 3) {
         if (job.query_result_id) {
-          const result = await this.client.get(
+          const result = await this.client.get<RedashQueryResult>(
             `/api/query_results/${job.query_result_id}`
           );
           return result.data;
         }
-        return job.result;
+        return job.result!;
       }
 
       if (job.status === 4) {
@@ -102,16 +105,15 @@ export class RedashClient {
 
   formatError(error: unknown): string {
     if (axios.isAxiosError(error)) {
-      const e = error as AxiosError;
-      if (e.response) {
-        const data = e.response.data as Record<string, unknown>;
+      if (error.response) {
+        const data = error.response.data as Record<string, unknown>;
         const msg = data?.message || data?.error || JSON.stringify(data);
-        return `Redash API error (${e.response.status}): ${msg}`;
+        return `Redash API error (${error.response.status}): ${msg}`;
       }
-      if (e.request) {
-        return `No response from Redash: ${e.message}`;
+      if (error.request) {
+        return `No response from Redash: ${error.message}`;
       }
-      return `Request error: ${e.message}`;
+      return `Request error: ${error.message}`;
     }
     return error instanceof Error ? error.message : String(error);
   }

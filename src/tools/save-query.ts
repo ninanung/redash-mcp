@@ -1,13 +1,12 @@
 import { RedashClient } from "@/redash-client.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { SaveQueryArgs } from "@/interfaces/tool-args.js";
 
 export async function handleSaveQuery(
-  args: Record<string, unknown>,
+  args: SaveQueryArgs,
   client: RedashClient
 ): Promise<ToolResult> {
-  const dataSourceId = args.data_source_id as number;
-  const name = args.name as string;
-  const query = args.query as string;
+  const { data_source_id: dataSourceId, name, query } = args;
 
   const saved = await client.saveQuery(name, query, dataSourceId);
   const url = `${process.env.REDASH_URL}/queries/${saved.id}`;

@@ -2,6 +2,14 @@ import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
 import type { ToolDefinition, ToolResult } from "@/interfaces/tools.js";
+import type {
+  GetSchemaArgs,
+  ExecuteQueryArgs,
+  ExploreColumnArgs,
+  FindMappingArgs,
+  SaveQueryArgs,
+  GetCacheArgs,
+} from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
 import { handleExecuteQuery } from "@/tools/execute-query.js";
@@ -169,17 +177,17 @@ export async function handleToolCall(
     case "list_data_sources":
       return handleListDataSources(client);
     case "get_schema":
-      return handleGetSchema(args, client, schemaCache, metadataCache);
+      return handleGetSchema(args as GetSchemaArgs, client, schemaCache, metadataCache);
     case "execute_query":
-      return handleExecuteQuery(args, client);
+      return handleExecuteQuery(args as ExecuteQueryArgs, client);
     case "explore_column":
-      return handleExploreColumn(args, client, metadataCache);
+      return handleExploreColumn(args as ExploreColumnArgs, client, metadataCache);
     case "find_mapping":
-      return handleFindMapping(args, client, schemaCache, metadataCache);
+      return handleFindMapping(args as FindMappingArgs, client, schemaCache, metadataCache);
     case "save_query":
-      return handleSaveQuery(args, client);
+      return handleSaveQuery(args as SaveQueryArgs, client);
     case "get_cache":
-      return handleGetCache(args, metadataCache);
+      return handleGetCache(args as GetCacheArgs, metadataCache);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],

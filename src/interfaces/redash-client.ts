@@ -34,3 +34,28 @@ export interface RedashSavedQuery {
   query: string;
   data_source_id: number;
 }
+
+export interface RedashSchemaResponse {
+  schema: RedashSchemaTable[];
+}
+
+export interface RedashJobResponse {
+  job?: {
+    id: string;
+    status: number;
+    error?: string;
+    query_result_id?: number;
+    result?: RedashQueryResult;
+  };
+  query_result?: RedashQueryResult["query_result"];
+}
+
+export interface RedashJobStatusResponse {
+  job: {
+    id: string;
+    status: number;
+    error?: string;
+    query_result_id?: number;
+    result?: RedashQueryResult;
+  };
+}

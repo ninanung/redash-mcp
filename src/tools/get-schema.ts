@@ -2,16 +2,15 @@ import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { GetSchemaArgs } from "@/interfaces/tool-args.js";
 
 export async function handleGetSchema(
-  args: Record<string, unknown>,
+  args: GetSchemaArgs,
   client: RedashClient,
   schemaCache: SchemaCache,
   metadataCache: MetadataCache
 ): Promise<ToolResult> {
-  const dataSourceId = args.data_source_id as number;
-  const keywords = args.keywords as string[] | undefined;
-  const refresh = args.refresh as boolean | undefined;
+  const { data_source_id: dataSourceId, keywords, refresh } = args;
 
   // 키워드가 있으면 테이블 추천 캐시 확인
   const recommendations: string[] = [];

@@ -2,17 +2,15 @@ import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { FindMappingArgs } from "@/interfaces/tool-args.js";
 
 export async function handleFindMapping(
-  args: Record<string, unknown>,
+  args: FindMappingArgs,
   client: RedashClient,
   schemaCache: SchemaCache,
   metadataCache: MetadataCache
 ): Promise<ToolResult> {
-  const dataSourceId = args.data_source_id as number;
-  const table = args.table as string;
-  const column = args.column as string;
-  const refresh = (args as Record<string, unknown>).refresh as boolean | undefined;
+  const { data_source_id: dataSourceId, table, column, refresh } = args;
 
   const cacheKey = `${table}.${column}`;
 

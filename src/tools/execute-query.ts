@@ -1,12 +1,12 @@
 import { RedashClient } from "@/redash-client.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
 
 export async function handleExecuteQuery(
-  args: Record<string, unknown>,
+  args: ExecuteQueryArgs,
   client: RedashClient
 ): Promise<ToolResult> {
-  const query = args.query as string;
-  const dataSourceId = args.data_source_id as number;
+  const { data_source_id: dataSourceId, query } = args;
 
   const trimmed = query.trim().toUpperCase();
   if (!trimmed.startsWith("SELECT") && !trimmed.startsWith("WITH")) {

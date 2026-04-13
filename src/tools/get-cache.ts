@@ -1,11 +1,12 @@
 import { MetadataCache } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { GetCacheArgs } from "@/interfaces/tool-args.js";
 
 export async function handleGetCache(
-  args: Record<string, unknown>,
+  args: GetCacheArgs,
   metadataCache: MetadataCache
 ): Promise<ToolResult> {
-  const keyword = args.keyword as string | undefined;
+  const { keyword } = args;
 
   if (!keyword) {
     return {

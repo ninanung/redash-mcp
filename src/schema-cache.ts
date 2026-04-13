@@ -1,4 +1,5 @@
-import { RedashClient, RedashSchemaTable } from "@/redash-client.js";
+import { RedashClient } from "@/redash-client.js";
+import type { RedashSchemaTable } from "@/interfaces/redash-client.js";
 import type { CacheEntry } from "@/interfaces/schema-cache.js";
 
 const DEFAULT_TTL = 30 * 60 * 1000; // 30분

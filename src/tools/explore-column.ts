@@ -1,20 +1,15 @@
 import { RedashClient } from "@/redash-client.js";
 import { MetadataCache } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
+import type { ExploreColumnArgs } from "@/interfaces/tool-args.js";
 
 export async function handleExploreColumn(
-  args: Record<string, unknown>,
+  args: ExploreColumnArgs,
   client: RedashClient,
   metadataCache: MetadataCache
 ): Promise<ToolResult> {
-  const dataSourceId = args.data_source_id as number;
-  const columns = args.columns as {
-    table: string;
-    column: string;
-    partition_filter?: string;
-  }[];
-  const limit = (args.limit as number) ?? 20;
-  const refresh = (args as Record<string, unknown>).refresh as boolean | undefined;
+  const { data_source_id: dataSourceId, columns, refresh } = args;
+  const limit = args.limit ?? 20;
 
   // 캐시 확인: refresh가 아니면 캐시된 컬럼은 스킵
   const cached: string[] = [];
