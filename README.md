@@ -70,7 +70,7 @@ Restart Claude Code to activate the MCP tools.
 |------|-------------|
 | `list_data_sources` | List available data sources |
 | `get_schema` | Fetch table/column schema (keyword filter, cached) |
-| `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; handles job polling automatically) |
+| `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; job polling handled automatically; auto-injects `LIMIT max_rows` — default 1000 — when the query has none) |
 | `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |
 | `find_mapping` | Automatically find mapping tables for numeric code columns |
 | `save_query` | Save a SQL query to Redash |
@@ -93,6 +93,7 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 ## Safety & Constraints
 
 - **Read-only SQL**: only statements starting with `SELECT` or `WITH` are allowed. DML/DDL (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, ...) is rejected before being sent to Redash.
+- **Row-limit guardrail**: `execute_query` auto-injects `LIMIT max_rows` (default 1000) when the query has no LIMIT, preventing accidental full-table scans from blowing up the model context. Override with the `max_rows` argument or include an explicit `LIMIT` in the SQL.
 - **Automatic schema recovery**: if a query fails with a "table/column not found" style error, the schema cache for that data source is invalidated, refreshed, and the updated table list is returned so the model can retry.
 - **Job polling**: Redash async jobs are polled until completion; only the final result is returned to the client.
 - **No write API**: the server does not expose any endpoint that mutates Redash state other than `save_query` (creating a new saved query).

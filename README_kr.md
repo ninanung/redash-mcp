@@ -70,7 +70,7 @@ npm run build
 |------|------|
 | `list_data_sources` | 데이터소스 목록 조회 |
 | `get_schema` | 테이블/컬럼 스키마 조회 (키워드 필터링, 캐싱) |
-| `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리) |
+| `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리, LIMIT이 없으면 `max_rows`(기본 1000) 자동 주입) |
 | `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |
 | `find_mapping` | 숫자 코드 컬럼의 매핑 테이블 자동 탐색 |
 | `save_query` | SQL을 Redash에 저장 |
@@ -93,6 +93,7 @@ npm run build
 ## 안전장치 / 제약사항
 
 - **읽기 전용 SQL**: `SELECT` 또는 `WITH`로 시작하는 쿼리만 허용합니다. `INSERT`·`UPDATE`·`DELETE`·`DROP`·`ALTER` 등 DML/DDL은 Redash로 전송되기 전에 차단됩니다.
+- **행 수 가드레일**: `execute_query`는 LIMIT이 없는 쿼리에 `LIMIT max_rows`(기본 1000)를 자동 주입하여, 풀 테이블 스캔으로 모델 컨텍스트가 터지는 사고를 방지합니다. `max_rows` 인자로 조정하거나 SQL에 `LIMIT`을 직접 지정할 수 있습니다.
 - **자동 스키마 복구**: "table/column not found" 유형의 에러가 발생하면 해당 데이터소스의 스키마 캐시를 무효화·재조회하고, 갱신된 테이블 목록을 반환하여 모델이 다시 시도할 수 있게 합니다.
 - **Job 폴링**: Redash의 비동기 job을 완료까지 폴링한 뒤 최종 결과만 클라이언트에 전달합니다.
 - **쓰기 API 없음**: Redash 상태를 변경하는 도구는 `save_query`(새 쿼리 저장)뿐입니다.

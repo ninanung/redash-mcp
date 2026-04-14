@@ -53,7 +53,7 @@ export function getToolDefinitions(): ToolDefinition[] {
     {
       name: "execute_query",
       description:
-        "SQL을 실행하고 결과를 반환합니다. 비동기 job 폴링을 내부에서 처리합니다.",
+        "SQL을 실행하고 결과를 반환합니다. 비동기 job 폴링을 내부에서 처리합니다. LIMIT이 없으면 max_rows(기본 1000)를 자동 주입합니다.",
       inputSchema: {
         type: "object",
         properties: {
@@ -63,7 +63,12 @@ export function getToolDefinitions(): ToolDefinition[] {
           },
           query: {
             type: "string",
-            description: "실행할 SQL (SELECT만 허용)",
+            description: "실행할 SQL (SELECT/WITH만 허용)",
+          },
+          max_rows: {
+            type: "number",
+            description:
+              "LIMIT이 없을 때 자동 주입할 최대 행 수 (기본 1000). 전체 결과를 원하면 쿼리에 LIMIT을 직접 지정하세요.",
           },
         },
         required: ["data_source_id", "query"],

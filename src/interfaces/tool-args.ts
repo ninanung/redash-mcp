@@ -9,6 +9,7 @@ export interface GetSchemaArgs extends ToolArgs {
 export interface ExecuteQueryArgs extends ToolArgs {
   data_source_id: number;
   query: string;
+  max_rows?: number;
 }
 
 export interface ExploreColumnArgs extends ToolArgs {

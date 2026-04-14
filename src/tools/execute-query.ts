@@ -12,8 +12,24 @@ const SCHEMA_ERROR_PATTERNS = [
   /unknown column/i,
 ];
 
+const DEFAULT_MAX_ROWS = 1000;
+
 function isSchemaError(message: string): boolean {
   return SCHEMA_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+function hasLimitClause(sql: string): boolean {
+  const stripped = sql
+    .replace(/--[^\n]*/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .trim()
+    .replace(/;+\s*$/, "");
+  return /\blimit\s+\d+/i.test(stripped);
+}
+
+function injectLimit(sql: string, limit: number): string {
+  const trimmed = sql.trim().replace(/;+\s*$/, "");
+  return `${trimmed}\nLIMIT ${limit}`;
 }
 
 export async function handleExecuteQuery(
@@ -21,7 +37,7 @@ export async function handleExecuteQuery(
   client: RedashClient,
   schemaCache: SchemaCache
 ): Promise<ToolResult> {
-  const { data_source_id: dataSourceId, query } = args;
+  const { data_source_id: dataSourceId, query, max_rows: maxRowsArg } = args;
 
   const trimmed = query.trim().toUpperCase();
   if (!trimmed.startsWith("SELECT") && !trimmed.startsWith("WITH")) {
@@ -33,9 +49,24 @@ export async function handleExecuteQuery(
     };
   }
 
+  const maxRows = maxRowsArg ?? DEFAULT_MAX_ROWS;
+  const limitInjected = !hasLimitClause(query);
+  const effectiveQuery = limitInjected ? injectLimit(query, maxRows) : query;
+
   try {
-    const result = await client.executeAdhocQuery(query, dataSourceId);
+    const result = await client.executeAdhocQuery(effectiveQuery, dataSourceId);
     const data = result.query_result.data;
+
+    const truncated = data.rows.length >= maxRows;
+    const notes: string[] = [];
+    if (limitInjected) {
+      notes.push(`LIMIT ${maxRows}을 자동 주입했습니다.`);
+    }
+    if (truncated) {
+      notes.push(
+        `결과가 ${maxRows}행에 도달하여 잘렸을 수 있습니다. 더 많은 행이 필요하면 max_rows를 늘리거나 쿼리에 LIMIT을 직접 지정하세요.`
+      );
+    }
 
     const resultJson = JSON.stringify(
       {
@@ -51,6 +82,8 @@ export async function handleExecuteQuery(
       2
     );
 
+    const notesText = notes.length > 0 ? `\n\n주의:\n- ${notes.join("\n- ")}` : "";
+
     return {
       content: [
         {
@@ -59,7 +92,7 @@ export async function handleExecuteQuery(
         },
         {
           type: "text",
-          text: `실행된 SQL:\n\`\`\`sql\n${query}\n\`\`\`\n\n이 쿼리를 Redash에 저장하려면 save_query 도구를 사용하세요.\n사용자에게 실행된 SQL과 함께 저장 여부 및 쿼리 이름을 확인해주세요.`,
+          text: `실행된 SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\n이 쿼리를 Redash에 저장하려면 save_query 도구를 사용하세요.\n사용자에게 실행된 SQL과 함께 저장 여부 및 쿼리 이름을 확인해주세요.`,
         },
       ],
     };
