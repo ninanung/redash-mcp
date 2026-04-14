@@ -106,7 +106,7 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 
 ## Safety & Constraints
 
-- **Read-only SQL**: only statements starting with `SELECT` or `WITH` are allowed. DML/DDL (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, ...) is rejected before being sent to Redash.
+- **Read-only SQL**: only statements starting with `SELECT` or `WITH` are allowed. DML/DDL keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`, `MERGE`, `GRANT`, `REVOKE`, `CALL`, `EXEC`, ...) are rejected even if buried inside a CTE. Multiple statements separated by semicolons are also blocked. Comments and string literals are stripped before the scan to prevent keyword-smuggling.
 - **Row-limit guardrail**: `execute_query` auto-injects `LIMIT max_rows` (default 1000) when the query has no LIMIT, preventing accidental full-table scans from blowing up the model context. Override with the `max_rows` argument or include an explicit `LIMIT` in the SQL.
 - **CSV export**: pass `save_csv: "/path/to/out.csv"` to `execute_query` to write the full result to disk instead of (or in addition to) returning it through the model context.
 - **Automatic schema recovery**: if a query fails with a "table/column not found" style error, the schema cache for that data source is invalidated, refreshed, and the updated table list is returned so the model can retry.

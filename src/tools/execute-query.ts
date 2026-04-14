@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
+import { validateReadOnlySql } from "@/sql-guard.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
 import type { RedashColumn } from "@/interfaces/redash-client.js";
@@ -71,12 +72,10 @@ export async function handleExecuteQuery(
     save_csv: saveCsv,
   } = args;
 
-  const trimmed = query.trim().toUpperCase();
-  if (!trimmed.startsWith("SELECT") && !trimmed.startsWith("WITH")) {
+  const guard = validateReadOnlySql(query);
+  if (!guard.ok) {
     return {
-      content: [
-        { type: "text", text: "SELECT/WITH 문만 실행할 수 있습니다." },
-      ],
+      content: [{ type: "text", text: guard.reason ?? "쿼리가 거부되었습니다." }],
       isError: true,
     };
   }

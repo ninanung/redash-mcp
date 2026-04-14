@@ -106,7 +106,7 @@ npm run build
 
 ## 안전장치 / 제약사항
 
-- **읽기 전용 SQL**: `SELECT` 또는 `WITH`로 시작하는 쿼리만 허용합니다. `INSERT`·`UPDATE`·`DELETE`·`DROP`·`ALTER` 등 DML/DDL은 Redash로 전송되기 전에 차단됩니다.
+- **읽기 전용 SQL**: `SELECT` 또는 `WITH`로 시작하는 쿼리만 허용합니다. `INSERT`·`UPDATE`·`DELETE`·`DROP`·`ALTER`·`CREATE`·`TRUNCATE`·`MERGE`·`GRANT`·`REVOKE`·`CALL`·`EXEC` 등은 CTE 내부에 숨겨도 차단되고, 세미콜론을 이용한 다중 문장도 거부됩니다. 주석과 문자열 리터럴은 스캔 전에 제거되어 키워드 우회를 막습니다.
 - **행 수 가드레일**: `execute_query`는 LIMIT이 없는 쿼리에 `LIMIT max_rows`(기본 1000)를 자동 주입하여, 풀 테이블 스캔으로 모델 컨텍스트가 터지는 사고를 방지합니다. `max_rows` 인자로 조정하거나 SQL에 `LIMIT`을 직접 지정할 수 있습니다.
 - **CSV 저장**: `execute_query`에 `save_csv: "/path/to/out.csv"`를 전달하면 결과를 디스크에 저장합니다. 대용량 결과를 모델 컨텍스트 밖으로 빼낼 때 유용합니다.
 - **자동 스키마 복구**: "table/column not found" 유형의 에러가 발생하면 해당 데이터소스의 스키마 캐시를 무효화·재조회하고, 갱신된 테이블 목록을 반환하여 모델이 다시 시도할 수 있게 합니다.
