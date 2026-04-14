@@ -6,17 +6,25 @@ export async function handleSaveQuery(
   args: SaveQueryArgs,
   client: RedashClient
 ): Promise<ToolResult> {
-  const { data_source_id: dataSourceId, name, query } = args;
+  const {
+    data_source_id: dataSourceId,
+    name,
+    query,
+    description,
+    tags,
+  } = args;
 
-  const saved = await client.saveQuery(name, query, dataSourceId);
+  const saved = await client.saveQuery(name, query, dataSourceId, {
+    description,
+    tags,
+  });
   const url = `${process.env.REDASH_URL}/queries/${saved.id}`;
 
+  const lines = [`쿼리 저장 완료!`, `ID: ${saved.id}`, `URL: ${url}`];
+  if (description) lines.push(`description: ${description}`);
+  if (tags && tags.length > 0) lines.push(`tags: ${tags.join(", ")}`);
+
   return {
-    content: [
-      {
-        type: "text",
-        text: `쿼리 저장 완료!\nID: ${saved.id}\nURL: ${url}`,
-      },
-    ],
+    content: [{ type: "text", text: lines.join("\n") }],
   };
 }

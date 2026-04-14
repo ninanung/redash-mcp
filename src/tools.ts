@@ -16,6 +16,7 @@ import type {
   DescribeTableArgs,
   FindTableArgs,
   JoinHintsArgs,
+  UpdateQueryArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -32,6 +33,7 @@ import { handleSelfTest } from "@/tools/self-test.js";
 import { handleDescribeTable } from "@/tools/describe-table.js";
 import { handleFindTable } from "@/tools/find-table.js";
 import { handleJoinHints } from "@/tools/join-hints.js";
+import { handleUpdateQuery } from "@/tools/update-query.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -243,18 +245,45 @@ export function getToolDefinitions(): ToolDefinition[] {
     },
     {
       name: "save_query",
-      description: "실행한 SQL을 Redash에 저장합니다.",
+      description:
+        "실행한 SQL을 Redash에 저장합니다. description, tags도 함께 지정할 수 있습니다.",
       inputSchema: {
         type: "object",
         properties: {
-          data_source_id: {
-            type: "number",
-            description: "데이터소스 ID",
-          },
+          data_source_id: { type: "number", description: "데이터소스 ID" },
           name: { type: "string", description: "쿼리 이름" },
           query: { type: "string", description: "저장할 SQL" },
+          description: {
+            type: "string",
+            description: "쿼리 설명 (선택)",
+          },
+          tags: {
+            type: "array",
+            items: { type: "string" },
+            description: "태그 목록 (선택)",
+          },
         },
         required: ["data_source_id", "name", "query"],
+      },
+    },
+    {
+      name: "update_query",
+      description:
+        "기존 저장 쿼리의 name/query/description/tags를 수정합니다. 지정된 필드만 업데이트됩니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query_id: { type: "number", description: "쿼리 ID" },
+          name: { type: "string", description: "새 이름" },
+          query: { type: "string", description: "새 SQL" },
+          description: { type: "string", description: "새 설명" },
+          tags: {
+            type: "array",
+            items: { type: "string" },
+            description: "새 태그 목록",
+          },
+        },
+        required: ["query_id"],
       },
     },
     {
@@ -362,6 +391,8 @@ export async function handleToolCall(
       return handleFindTable(args as FindTableArgs, client, schemaCache);
     case "join_hints":
       return handleJoinHints(args as JoinHintsArgs, client, schemaCache);
+    case "update_query":
+      return handleUpdateQuery(args as UpdateQueryArgs, client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],

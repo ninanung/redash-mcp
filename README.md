@@ -80,7 +80,8 @@ Restart Claude Code to activate the MCP tools.
 | `find_table` | Find tables by column name and/or table-name keyword (useful when locating join targets) |
 | `join_hints` | List other tables that share column names with the given table — candidate join keys |
 | `find_mapping` | Automatically find mapping tables for numeric code columns |
-| `save_query` | Save a SQL query to Redash |
+| `save_query` | Save a SQL query to Redash (supports `description` and `tags`) |
+| `update_query` | Update `name`/`query`/`description`/`tags` of an existing saved query |
 | `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |
 | `get_saved_query` | Fetch SQL and metadata of a saved query by ID |
 | `execute_saved_query` | Run a saved query by ID with optional parameters |

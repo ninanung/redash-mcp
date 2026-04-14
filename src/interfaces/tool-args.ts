@@ -35,6 +35,16 @@ export interface SaveQueryArgs extends ToolArgs {
   data_source_id: number;
   name: string;
   query: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface UpdateQueryArgs extends ToolArgs {
+  query_id: number;
+  name?: string;
+  query?: string;
+  description?: string;
+  tags?: string[];
 }
 
 export interface GetCacheArgs extends ToolArgs {

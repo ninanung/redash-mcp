@@ -80,7 +80,8 @@ npm run build
 | `find_table` | 컬럼명·테이블 키워드로 테이블 탐색 (조인 대상 찾기 등에 유용) |
 | `join_hints` | 대상 테이블과 동일한 이름의 컬럼을 가진 다른 테이블을 조인 후보로 제안 |
 | `find_mapping` | 숫자 코드 컬럼의 매핑 테이블 자동 탐색 |
-| `save_query` | SQL을 Redash에 저장 |
+| `save_query` | SQL을 Redash에 저장 (`description`·`tags` 지원) |
+| `update_query` | 저장된 쿼리의 `name`·`query`·`description`·`tags` 수정 |
 | `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
 | `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 |
 | `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능) |

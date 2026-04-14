@@ -91,14 +91,37 @@ export class RedashClient {
   async saveQuery(
     name: string,
     query: string,
-    dataSourceId: number
+    dataSourceId: number,
+    options: {
+      description?: string;
+      tags?: string[];
+    } = {}
   ): Promise<RedashSavedQuery> {
     this.assertDataSourceAllowed(dataSourceId);
-    const res = await this.client.post<RedashSavedQuery>("/api/queries", {
+    const payload: Record<string, unknown> = {
       name,
       query,
       data_source_id: dataSourceId,
-    });
+    };
+    if (options.description !== undefined) payload.description = options.description;
+    if (options.tags !== undefined) payload.tags = options.tags;
+    const res = await this.client.post<RedashSavedQuery>("/api/queries", payload);
+    return res.data;
+  }
+
+  async updateQuery(
+    queryId: number,
+    updates: {
+      name?: string;
+      query?: string;
+      description?: string;
+      tags?: string[];
+    }
+  ): Promise<RedashSavedQuery> {
+    const res = await this.client.post<RedashSavedQuery>(
+      `/api/queries/${queryId}`,
+      updates
+    );
     return res.data;
   }
 
