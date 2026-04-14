@@ -7,6 +7,7 @@ import {
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
+import { AuditLog } from "@/audit-log.js";
 import { getToolDefinitions, handleToolCall } from "@/tools.js";
 import { logger } from "@/logger.js";
 
@@ -32,6 +33,7 @@ const client = new RedashClient(REDASH_URL, REDASH_API_KEY, {
 });
 const schemaCache = new SchemaCache();
 const metadataCache = new MetadataCache();
+const auditLog = new AuditLog();
 
 const server = new Server(
   { name: "redash-mcp", version: "0.1.0" },
@@ -50,13 +52,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     const result = await handleToolCall(name, args ?? {}, client, schemaCache, metadataCache);
-    logger.info(`tool ${name} done in ${Date.now() - started}ms`);
+    const durationMs = Date.now() - started;
+    logger.info(`tool ${name} done in ${durationMs}ms`);
+    auditLog.record({
+      tool: name,
+      args,
+      durationMs,
+      status: result.isError ? "error" : "ok",
+    });
     return result;
   } catch (error) {
-    logger.error(`tool ${name} failed:`, client.formatError(error));
+    const message = client.formatError(error);
+    logger.error(`tool ${name} failed:`, message);
+    auditLog.record({
+      tool: name,
+      args,
+      durationMs: Date.now() - started,
+      status: "error",
+      error: message,
+    });
     return {
       content: [
-        { type: "text" as const, text: `Error: ${client.formatError(error)}` },
+        { type: "text" as const, text: `Error: ${message}` },
       ],
       isError: true,
     };
@@ -69,7 +86,7 @@ async function main() {
   logger.info(
     `redash-mcp started (log level: ${logger.level}, allowed DS: ${
       client.getAllowedDataSources()?.join(",") ?? "all"
-    })`
+    }, audit: ${auditLog.getPath() ?? "off"})`
   );
 }
 
