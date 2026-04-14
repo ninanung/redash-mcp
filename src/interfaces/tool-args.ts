@@ -64,3 +64,21 @@ export interface SampleRowsArgs extends ToolArgs {
   partition_filter?: string;
   columns?: string[];
 }
+
+export interface DescribeTableArgs extends ToolArgs {
+  data_source_id: number;
+  table: string;
+  sample_limit?: number;
+  partition_filter?: string;
+}
+
+export interface FindTableArgs extends ToolArgs {
+  data_source_id: number;
+  column?: string;
+  table_keyword?: string;
+}
+
+export interface JoinHintsArgs extends ToolArgs {
+  data_source_id: number;
+  table: string;
+}

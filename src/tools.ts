@@ -13,6 +13,9 @@ import type {
   GetSavedQueryArgs,
   ExecuteSavedQueryArgs,
   SampleRowsArgs,
+  DescribeTableArgs,
+  FindTableArgs,
+  JoinHintsArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -26,6 +29,9 @@ import { handleGetSavedQuery } from "@/tools/get-saved-query.js";
 import { handleExecuteSavedQuery } from "@/tools/execute-saved-query.js";
 import { handleSampleRows } from "@/tools/sample-rows.js";
 import { handleSelfTest } from "@/tools/self-test.js";
+import { handleDescribeTable } from "@/tools/describe-table.js";
+import { handleFindTable } from "@/tools/find-table.js";
+import { handleJoinHints } from "@/tools/join-hints.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -126,6 +132,57 @@ export function getToolDefinitions(): ToolDefinition[] {
           },
         },
         required: ["data_source_id", "columns"],
+      },
+    },
+    {
+      name: "describe_table",
+      description:
+        "테이블의 컬럼 목록과 샘플 행을 한 번에 조회합니다. get_schema + sample_rows를 합친 단축 도구입니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          data_source_id: { type: "number", description: "데이터소스 ID" },
+          table: { type: "string", description: "테이블명 (schema.table)" },
+          sample_limit: { type: "number", description: "샘플 행 수 (기본 5)" },
+          partition_filter: {
+            type: "string",
+            description: "파티션 필터 (대용량 테이블 필수)",
+          },
+        },
+        required: ["data_source_id", "table"],
+      },
+    },
+    {
+      name: "find_table",
+      description:
+        "특정 컬럼명을 가진 테이블을 찾거나, 테이블명 키워드로 필터링합니다. 조인할 테이블을 찾거나 특정 필드가 어느 테이블에 있는지 파악할 때 사용합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          data_source_id: { type: "number", description: "데이터소스 ID" },
+          column: {
+            type: "string",
+            description: "찾을 컬럼명 (예: user_id)",
+          },
+          table_keyword: {
+            type: "string",
+            description: "테이블명 필터 키워드 (예: order)",
+          },
+        },
+        required: ["data_source_id"],
+      },
+    },
+    {
+      name: "join_hints",
+      description:
+        "대상 테이블과 동일한 이름의 컬럼을 가진 다른 테이블을 찾아 조인 후보로 제안합니다. 실제 FK 관계를 보장하지 않으므로 타입·값을 별도로 검증해야 합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          data_source_id: { type: "number", description: "데이터소스 ID" },
+          table: { type: "string", description: "기준 테이블명" },
+        },
+        required: ["data_source_id", "table"],
       },
     },
     {
@@ -294,6 +351,12 @@ export async function handleToolCall(
       return handleSampleRows(args as SampleRowsArgs, client);
     case "self_test":
       return handleSelfTest(client);
+    case "describe_table":
+      return handleDescribeTable(args as DescribeTableArgs, client, schemaCache);
+    case "find_table":
+      return handleFindTable(args as FindTableArgs, client, schemaCache);
+    case "join_hints":
+      return handleJoinHints(args as JoinHintsArgs, client, schemaCache);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
