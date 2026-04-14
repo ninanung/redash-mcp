@@ -63,6 +63,7 @@ Restart Claude Code to activate the MCP tools.
 |----------|-------------|
 | `REDASH_URL` | Redash server URL |
 | `REDASH_API_KEY` | Redash API Key |
+| `REDASH_ALLOWED_DS` | (optional) Comma-separated list of allowed data source IDs (e.g. `1,3,7`). When set, all other IDs are blocked and `list_data_sources` only returns allowed ones. |
 
 ## Tools
 
@@ -107,6 +108,7 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 - `data_source_id` is a **required argument** on every query-related tool (`execute_query`, `get_schema`, `explore_column`, `find_mapping`, `save_query`).
 - Call `list_data_sources` first to discover available IDs; the MCP client is expected to pass the chosen ID explicitly.
 - There is no implicit "default data source" — this is intentional, to avoid accidentally querying the wrong database when multiple sources are configured.
+- Set `REDASH_ALLOWED_DS=1,3,7` to restrict the server to specific data source IDs. Any other ID is rejected before hitting Redash, and `list_data_sources` / `list_saved_queries` return only the allowed subset.
 
 ## Cache
 

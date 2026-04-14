@@ -19,21 +19,48 @@ import type {
 
 export class RedashClient {
   private client: AxiosInstance;
+  private allowedDataSources: Set<number> | null;
 
-  constructor(url: string, apiKey: string, timeout = 30000) {
+  constructor(
+    url: string,
+    apiKey: string,
+    options: { timeout?: number; allowedDataSources?: number[] } = {}
+  ) {
+    const { timeout = 30000, allowedDataSources } = options;
     this.client = axios.create({
       baseURL: url,
       headers: { Authorization: `Key ${apiKey}` },
       timeout,
     });
+    this.allowedDataSources =
+      allowedDataSources && allowedDataSources.length > 0
+        ? new Set(allowedDataSources)
+        : null;
+  }
+
+  assertDataSourceAllowed(dataSourceId: number): void {
+    if (this.allowedDataSources && !this.allowedDataSources.has(dataSourceId)) {
+      const allowed = [...this.allowedDataSources].join(", ");
+      throw new Error(
+        `data_source_id ${dataSourceId}는 허용되지 않았습니다. REDASH_ALLOWED_DS=${allowed}`
+      );
+    }
+  }
+
+  getAllowedDataSources(): number[] | null {
+    return this.allowedDataSources ? [...this.allowedDataSources] : null;
   }
 
   async listDataSources(): Promise<RedashDataSource[]> {
     const res = await this.client.get<RedashDataSource[]>("/api/data_sources");
+    if (this.allowedDataSources) {
+      return res.data.filter((d) => this.allowedDataSources!.has(d.id));
+    }
     return res.data;
   }
 
   async getSchema(dataSourceId: number): Promise<RedashSchemaTable[]> {
+    this.assertDataSourceAllowed(dataSourceId);
     const res = await this.client.get<RedashSchemaResponse>(
       `/api/data_sources/${dataSourceId}/schema`
     );
@@ -44,6 +71,7 @@ export class RedashClient {
     query: string,
     dataSourceId: number
   ): Promise<RedashQueryResult> {
+    this.assertDataSourceAllowed(dataSourceId);
     const payload = {
       query,
       data_source_id: dataSourceId,
@@ -65,6 +93,7 @@ export class RedashClient {
     query: string,
     dataSourceId: number
   ): Promise<RedashSavedQuery> {
+    this.assertDataSourceAllowed(dataSourceId);
     const res = await this.client.post<RedashSavedQuery>("/api/queries", {
       name,
       query,
@@ -94,6 +123,11 @@ export class RedashClient {
         (q) => q.data_source_id === params.dataSourceId
       );
     }
+    if (this.allowedDataSources) {
+      data.results = data.results.filter((q) =>
+        this.allowedDataSources!.has(q.data_source_id)
+      );
+    }
     return data;
   }
 
@@ -108,6 +142,8 @@ export class RedashClient {
     queryId: number,
     parameters: Record<string, unknown> = {}
   ): Promise<RedashQueryResult> {
+    const saved = await this.getSavedQuery(queryId);
+    this.assertDataSourceAllowed(saved.data_source_id);
     const res = await this.client.post<RedashJobResponse>(
       `/api/queries/${queryId}/results`,
       { parameters, max_age: 0 }

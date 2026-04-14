@@ -63,6 +63,7 @@ npm run build
 |------|------|
 | `REDASH_URL` | Redash 서버 URL |
 | `REDASH_API_KEY` | Redash API Key |
+| `REDASH_ALLOWED_DS` | (선택) 허용할 데이터소스 ID 목록 (콤마 구분, 예: `1,3,7`). 설정 시 나머지 ID는 차단되고, `list_data_sources`도 허용된 것만 반환합니다. |
 
 ## 도구
 
@@ -107,6 +108,7 @@ npm run build
 - 쿼리 관련 도구(`execute_query`, `get_schema`, `explore_column`, `find_mapping`, `save_query`)는 모두 `data_source_id`를 **필수 인자**로 받습니다.
 - 먼저 `list_data_sources`로 사용 가능한 ID를 조회한 뒤, MCP 클라이언트가 명시적으로 선택한 ID를 전달해야 합니다.
 - 암묵적인 "기본 데이터소스"는 의도적으로 두지 않았습니다. 여러 데이터소스가 있을 때 엉뚱한 DB에 쿼리가 나가는 사고를 방지하기 위함입니다.
+- `REDASH_ALLOWED_DS=1,3,7`로 허용할 데이터소스 ID를 제한할 수 있습니다. 다른 ID는 Redash에 도달하기 전에 거부되며, `list_data_sources`·`list_saved_queries`도 허용된 항목만 반환합니다.
 
 ## 캐시
 

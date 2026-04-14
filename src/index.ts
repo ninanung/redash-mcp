@@ -11,6 +11,7 @@ import { getToolDefinitions, handleToolCall } from "@/tools.js";
 
 const REDASH_URL = process.env.REDASH_URL;
 const REDASH_API_KEY = process.env.REDASH_API_KEY;
+const REDASH_ALLOWED_DS = process.env.REDASH_ALLOWED_DS;
 
 if (!REDASH_URL || !REDASH_API_KEY) {
   console.error(
@@ -19,7 +20,15 @@ if (!REDASH_URL || !REDASH_API_KEY) {
   process.exit(1);
 }
 
-const client = new RedashClient(REDASH_URL, REDASH_API_KEY);
+const allowedDataSources = REDASH_ALLOWED_DS
+  ? REDASH_ALLOWED_DS.split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n))
+  : undefined;
+
+const client = new RedashClient(REDASH_URL, REDASH_API_KEY, {
+  allowedDataSources,
+});
 const schemaCache = new SchemaCache();
 const metadataCache = new MetadataCache();
 
