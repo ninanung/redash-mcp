@@ -13,6 +13,7 @@
     "ai"
   ],
   "type": "module",
+  "license": "MIT",
   "bin": {
     "redash-mcp": "./dist/cli.js"
   },

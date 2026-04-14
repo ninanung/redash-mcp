@@ -1,12 +1,18 @@
 # redash-mcp
 
-Redash API를 MCP(Model Context Protocol) 서버로 제공합니다.
+[![npm version](https://img.shields.io/npm/v/@seungje.jun/redash-mcp.svg)](https://www.npmjs.com/package/@seungje.jun/redash-mcp)
+[![license](https://img.shields.io/npm/l/@seungje.jun/redash-mcp.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/@seungje.jun/redash-mcp.svg)](https://nodejs.org)
 
-## 설치 및 설정
+Expose the Redash API as an MCP (Model Context Protocol) server. Schema, column values, and code-to-label mappings are cached — in memory for schema and persistently on disk for metadata — so repeated lookups skip redundant Redash calls and the model can compose queries without re-exploring the database every time.
 
-### npx (설치 불필요)
+[한국어 문서 / Korean README](./README_kr.md)
 
-`~/.mcp.json`에 아래 내용을 추가합니다.
+## Installation & Setup
+
+### npx (no installation required)
+
+Add the following to `~/.mcp.json`.
 
 ```json
 {
@@ -23,7 +29,7 @@ Redash API를 MCP(Model Context Protocol) 서버로 제공합니다.
 }
 ```
 
-### 소스에서 직접 빌드
+### Build from source
 
 ```bash
 git clone https://github.com/ninanung/redash-mcp.git
@@ -32,7 +38,7 @@ npm install
 npm run build
 ```
 
-`~/.mcp.json`에 아래 내용을 추가합니다.
+Add the following to `~/.mcp.json`.
 
 ```json
 {
@@ -49,28 +55,68 @@ npm run build
 }
 ```
 
-설정 후 Claude Code를 재시작하면 MCP 도구들이 활성화됩니다.
+Restart Claude Code to activate the MCP tools.
 
-### 환경변수
+### Environment Variables
 
-| 변수 | 설명 |
-|------|------|
-| `REDASH_URL` | Redash 서버 URL |
+| Variable | Description |
+|----------|-------------|
+| `REDASH_URL` | Redash server URL |
 | `REDASH_API_KEY` | Redash API Key |
 
-## 도구
+## Tools
 
-| 도구 | 설명 |
-|------|------|
-| `list_data_sources` | 데이터소스 목록 조회 |
-| `get_schema` | 테이블/컬럼 스키마 조회 (키워드 필터링, 캐싱) |
-| `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리) |
-| `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |
-| `find_mapping` | 숫자 코드 컬럼의 매핑 테이블 자동 탐색 |
-| `save_query` | SQL을 Redash에 저장 |
-| `get_cache` | 메타데이터 캐시 조회 (컬럼 타입/값, 매핑 테이블, 추천 테이블) |
+| Tool | Description |
+|------|-------------|
+| `list_data_sources` | List available data sources |
+| `get_schema` | Fetch table/column schema (keyword filter, cached) |
+| `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; handles job polling automatically) |
+| `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |
+| `find_mapping` | Automatically find mapping tables for numeric code columns |
+| `save_query` | Save a SQL query to Redash |
+| `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |
 
-## 캐시
+## Usage Example
 
-- **스키마 캐시**: 인메모리, 서버가 살아있는 동안 유지. 쿼리 실행 시 테이블/컬럼 에러가 발생하면 자동 갱신. `get_schema`의 `refresh: true`로 수동 갱신도 가능
-- **메타데이터 캐시**: `~/.redash-mcp/metadata-cache.json`에 영구 저장. `explore_column`, `find_mapping` 결과를 자동 저장하여 반복 조회 시 활용
+A typical natural-language flow, as orchestrated by the MCP client:
+
+1. User: "Find me the orders table and show yesterday's revenue."
+2. `list_data_sources` → pick the target `data_source_id`.
+3. `get_schema` with keyword `order` → locate candidate tables/columns.
+4. `explore_column` on status/type columns → understand enum values and infer types.
+5. `find_mapping` on code columns (e.g. `status_cd`) → resolve numeric codes to labels.
+6. `execute_query` → run the final `SELECT` and return rows.
+7. (Optional) `save_query` → persist the SQL back to Redash.
+
+Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via `get_cache`.
+
+## Safety & Constraints
+
+- **Read-only SQL**: only statements starting with `SELECT` or `WITH` are allowed. DML/DDL (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, ...) is rejected before being sent to Redash.
+- **Automatic schema recovery**: if a query fails with a "table/column not found" style error, the schema cache for that data source is invalidated, refreshed, and the updated table list is returned so the model can retry.
+- **Job polling**: Redash async jobs are polled until completion; only the final result is returned to the client.
+- **No write API**: the server does not expose any endpoint that mutates Redash state other than `save_query` (creating a new saved query).
+
+## Data Source Selection
+
+- `data_source_id` is a **required argument** on every query-related tool (`execute_query`, `get_schema`, `explore_column`, `find_mapping`, `save_query`).
+- Call `list_data_sources` first to discover available IDs; the MCP client is expected to pass the chosen ID explicitly.
+- There is no implicit "default data source" — this is intentional, to avoid accidentally querying the wrong database when multiple sources are configured.
+
+## Cache
+
+- **Schema cache**: in-memory, kept alive while the server runs. Refreshed automatically when a query execution hits a table/column error. Manual refresh is available via `refresh: true` on `get_schema`.
+- **Metadata cache**: persisted to `~/.redash-mcp/metadata-cache.json`. Results from `explore_column` and `find_mapping` are stored automatically and reused on subsequent lookups.
+
+### Cache Location & Reset
+
+| Cache | Location | Reset |
+|-------|----------|-------|
+| Schema | in-memory (per server process) | restart the MCP server, or call `get_schema` with `refresh: true` |
+| Metadata | `~/.redash-mcp/metadata-cache.json` | delete the file (`rm ~/.redash-mcp/metadata-cache.json`) — it will be recreated on the next write |
+
+The metadata cache file is a plain JSON document — safe to inspect, edit, or back up manually.
+
+## License
+
+[MIT](./LICENSE)
