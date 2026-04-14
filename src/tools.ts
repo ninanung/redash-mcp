@@ -19,6 +19,7 @@ import type {
   UpdateQueryArgs,
   ListDashboardsArgs,
   GetDashboardArgs,
+  ExplainQueryArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -38,6 +39,7 @@ import { handleJoinHints } from "@/tools/join-hints.js";
 import { handleUpdateQuery } from "@/tools/update-query.js";
 import { handleListDashboards } from "@/tools/list-dashboards.js";
 import { handleGetDashboard } from "@/tools/get-dashboard.js";
+import { handleExplainQuery } from "@/tools/explain-query.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -148,6 +150,19 @@ export function getToolDefinitions(): ToolDefinition[] {
           },
         },
         required: ["data_source_id", "columns"],
+      },
+    },
+    {
+      name: "explain_query",
+      description:
+        "쿼리를 실행하지 않고 EXPLAIN으로 실행 계획을 조회합니다. 비용·스캔 범위를 사전 확인할 때 사용. 데이터소스 엔진별로 지원 여부가 다르므로 실패 시 엔진 문법으로 직접 실행해야 합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          data_source_id: { type: "number", description: "데이터소스 ID" },
+          query: { type: "string", description: "EXPLAIN 대상 SQL" },
+        },
+        required: ["data_source_id", "query"],
       },
     },
     {
@@ -434,6 +449,8 @@ export async function handleToolCall(
       return handleListDashboards(args as ListDashboardsArgs, client);
     case "get_dashboard":
       return handleGetDashboard(args as GetDashboardArgs, client);
+    case "explain_query":
+      return handleExplainQuery(args as ExplainQueryArgs, client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],

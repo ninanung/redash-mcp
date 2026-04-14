@@ -58,6 +58,11 @@ export interface GetDashboardArgs extends ToolArgs {
   id: string | number;
 }
 
+export interface ExplainQueryArgs extends ToolArgs {
+  data_source_id: number;
+  query: string;
+}
+
 export interface GetCacheArgs extends ToolArgs {
   keyword?: string;
 }
