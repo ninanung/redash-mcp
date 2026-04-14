@@ -1,6 +1,5 @@
-import { RedashClient } from "@/redash-client.js";
-import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
+import { ClientRegistry } from "@/client-registry.js";
 import type { ToolDefinition, ToolResult } from "@/interfaces/tools.js";
 import type {
   GetSchemaArgs,
@@ -454,11 +453,19 @@ export function getToolDefinitions(): ToolDefinition[] {
 
 export async function handleToolCall(
   name: string,
-  args: Record<string, unknown>,
-  client: RedashClient,
-  schemaCache: SchemaCache,
+  rawArgs: Record<string, unknown>,
+  registry: ClientRegistry,
   metadataCache: MetadataCache
 ): Promise<ToolResult> {
+  const { instance, ...args } = rawArgs as Record<string, unknown> & {
+    instance?: string;
+  };
+  const ctx = registry.resolve(
+    typeof instance === "string" ? instance : undefined
+  );
+  const client = ctx.client;
+  const schemaCache = ctx.schemaCache;
+
   switch (name) {
     case "list_data_sources":
       return handleListDataSources(client);

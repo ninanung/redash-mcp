@@ -61,8 +61,9 @@ Restart Claude Code to activate the MCP tools.
 
 | Variable | Description |
 |----------|-------------|
-| `REDASH_URL` | Redash server URL |
-| `REDASH_API_KEY` | Redash API Key |
+| `REDASH_URL` | Redash server URL (single-instance mode, required when `REDASH_INSTANCES` is unset) |
+| `REDASH_API_KEY` | Redash API Key (single-instance mode) |
+| `REDASH_INSTANCES` | (optional) JSON array for multi-instance mode. Example: `[{"name":"prod","url":"...","api_key":"...","allowed_data_sources":[1,2]},{"name":"dev","url":"...","api_key":"..."}]`. When set, pass `instance: "prod"` on any tool call to pick the target. Falls back to the first entry if `instance` is omitted. |
 | `REDASH_ALLOWED_DS` | (optional) Comma-separated list of allowed data source IDs (e.g. `1,3,7`). When set, all other IDs are blocked and `list_data_sources` only returns allowed ones. |
 | `REDASH_MCP_LOG` | (optional) Log level: `debug`, `info` (default), `warn`, `error`, `silent`. Logs go to stderr to avoid corrupting the MCP stdio channel. |
 | `REDASH_MCP_AUDIT_LOG` | (optional) Audit log file path. Defaults to `~/.redash-mcp/audit.log`. Set to `off` to disable. Each line is a JSON record with tool name, args, duration, status. |

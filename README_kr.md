@@ -61,8 +61,9 @@ npm run build
 
 | 변수 | 설명 |
 |------|------|
-| `REDASH_URL` | Redash 서버 URL |
-| `REDASH_API_KEY` | Redash API Key |
+| `REDASH_URL` | Redash 서버 URL (단일 인스턴스용, `REDASH_INSTANCES` 미설정 시 필수) |
+| `REDASH_API_KEY` | Redash API Key (단일 인스턴스용) |
+| `REDASH_INSTANCES` | (선택) 여러 Redash 인스턴스를 동시에 사용할 때 쓰는 JSON 배열. 예: `[{"name":"prod","url":"...","api_key":"...","allowed_data_sources":[1,2]},{"name":"dev","url":"...","api_key":"..."}]`. 설정 시 각 도구 호출에 `instance: "prod"` 인자로 대상 선택. 미지정 시 배열 첫 항목을 기본값으로 사용. |
 | `REDASH_ALLOWED_DS` | (선택) 허용할 데이터소스 ID 목록 (콤마 구분, 예: `1,3,7`). 설정 시 나머지 ID는 차단되고, `list_data_sources`도 허용된 것만 반환합니다. |
 | `REDASH_MCP_LOG` | (선택) 로그 레벨: `debug`, `info`(기본), `warn`, `error`, `silent`. MCP stdio 채널을 해치지 않도록 로그는 stderr로 출력됩니다. |
 | `REDASH_MCP_AUDIT_LOG` | (선택) 감사 로그 파일 경로. 기본값 `~/.redash-mcp/audit.log`. `off`로 설정 시 비활성화. 각 줄은 도구명·인자·수행시간·상태를 담은 JSON 레코드. |
