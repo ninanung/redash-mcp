@@ -153,9 +153,15 @@ export async function handleExecuteQuery(
         null,
         2
       );
-      notes.push(
-        `결과가 ${data.rows.length}행으로 임계치(${threshold})를 초과하여 요약되었습니다. 전체 행은 save_csv로 파일 저장하거나 summarize:"never"로 다시 호출하세요.`
-      );
+      if (summarize === "always") {
+        notes.push(
+          `summarize:"always"로 강제 요약했습니다 (${data.rows.length}행). 전체 행이 필요하면 summarize를 생략하거나 "never"로 호출하세요.`
+        );
+      } else {
+        notes.push(
+          `결과가 ${data.rows.length}행으로 임계치(${threshold})를 초과하여 요약되었습니다. 전체 행은 save_csv로 파일 저장하거나 summarize:"never"로 다시 호출하세요.`
+        );
+      }
     } else {
       resultJson = JSON.stringify(
         {
@@ -188,6 +194,18 @@ export async function handleExecuteQuery(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+
+    if (offset && offset > 0 && /OFFSET/i.test(message)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `쿼리 실패: ${message}\n\n현재 엔진이 OFFSET 문법을 지원하지 않습니다 (Presto <0.176 등). offset 대신 쿼리에 WHERE 조건이나 ROW_NUMBER() 기반 페이지네이션을 직접 작성하세요.`,
+          },
+        ],
+        isError: true,
+      };
+    }
 
     if (isSchemaError(message) && schemaCache.isCached(dataSourceId)) {
       schemaCache.invalidate(dataSourceId);
