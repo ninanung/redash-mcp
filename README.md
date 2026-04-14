@@ -72,6 +72,7 @@ Restart Claude Code to activate the MCP tools.
 | `get_schema` | Fetch table/column schema (keyword filter, cached) |
 | `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; job polling handled automatically; auto-injects `LIMIT max_rows` — default 1000 — when the query has none) |
 | `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |
+| `sample_rows` | Return a few raw rows from a table (default 5) to inspect real column values at a glance |
 | `find_mapping` | Automatically find mapping tables for numeric code columns |
 | `save_query` | Save a SQL query to Redash |
 | `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |

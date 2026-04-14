@@ -12,6 +12,7 @@ import type {
   ListSavedQueriesArgs,
   GetSavedQueryArgs,
   ExecuteSavedQueryArgs,
+  SampleRowsArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -23,6 +24,7 @@ import { handleGetCache } from "@/tools/get-cache.js";
 import { handleListSavedQueries } from "@/tools/list-saved-queries.js";
 import { handleGetSavedQuery } from "@/tools/get-saved-query.js";
 import { handleExecuteSavedQuery } from "@/tools/execute-saved-query.js";
+import { handleSampleRows } from "@/tools/sample-rows.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -117,6 +119,33 @@ export function getToolDefinitions(): ToolDefinition[] {
           },
         },
         required: ["data_source_id", "columns"],
+      },
+    },
+    {
+      name: "sample_rows",
+      description:
+        "테이블의 샘플 행을 조회합니다 (기본 5행). 컬럼 구조와 실제 값의 형태를 한 번에 파악할 때 사용합니다. explore_column이 DISTINCT만 주는 것과 달리 원본 행을 그대로 반환합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          data_source_id: { type: "number", description: "데이터소스 ID" },
+          table: {
+            type: "string",
+            description: "테이블명 (schema.table 형식)",
+          },
+          limit: { type: "number", description: "샘플 행 수 (기본 5)" },
+          partition_filter: {
+            type: "string",
+            description:
+              "파티션 필터 (예: p_ymd = '20260413'). 대용량 테이블 필수.",
+          },
+          columns: {
+            type: "array",
+            items: { type: "string" },
+            description: "조회할 컬럼 (생략 시 *)",
+          },
+        },
+        required: ["data_source_id", "table"],
       },
     },
     {
@@ -254,6 +283,8 @@ export async function handleToolCall(
       return handleGetSavedQuery(args as GetSavedQueryArgs, client);
     case "execute_saved_query":
       return handleExecuteSavedQuery(args as ExecuteSavedQueryArgs, client);
+    case "sample_rows":
+      return handleSampleRows(args as SampleRowsArgs, client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],

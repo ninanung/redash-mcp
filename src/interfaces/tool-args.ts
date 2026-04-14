@@ -56,3 +56,11 @@ export interface ExecuteSavedQueryArgs extends ToolArgs {
   parameters?: Record<string, unknown>;
   max_rows?: number;
 }
+
+export interface SampleRowsArgs extends ToolArgs {
+  data_source_id: number;
+  table: string;
+  limit?: number;
+  partition_filter?: string;
+  columns?: string[];
+}

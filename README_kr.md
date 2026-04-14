@@ -72,6 +72,7 @@ npm run build
 | `get_schema` | 테이블/컬럼 스키마 조회 (키워드 필터링, 캐싱) |
 | `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리, LIMIT이 없으면 `max_rows`(기본 1000) 자동 주입) |
 | `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |
+| `sample_rows` | 테이블의 샘플 행 조회 (기본 5행) — 컬럼별 실제 값 형태를 빠르게 파악 |
 | `find_mapping` | 숫자 코드 컬럼의 매핑 테이블 자동 탐색 |
 | `save_query` | SQL을 Redash에 저장 |
 | `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
