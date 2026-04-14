@@ -11,6 +11,7 @@ export interface ExecuteQueryArgs extends ToolArgs {
   query: string;
   max_rows?: number;
   save_csv?: string;
+  timeout_ms?: number;
 }
 
 export interface ExploreColumnArgs extends ToolArgs {

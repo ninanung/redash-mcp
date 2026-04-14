@@ -102,6 +102,11 @@ export function getToolDefinitions(): ToolDefinition[] {
             description:
               "지정 시 결과를 CSV 파일로 저장합니다 (경로). 대용량 결과를 모델 컨텍스트 밖으로 빼낼 때 사용.",
           },
+          timeout_ms: {
+            type: "number",
+            description:
+              "쿼리 실행 타임아웃(ms). 기본 120000. REDASH_QUERY_TIMEOUT_MS 환경변수로도 조정 가능.",
+          },
         },
         required: ["data_source_id", "query"],
       },

@@ -70,6 +70,7 @@ export async function handleExecuteQuery(
     query,
     max_rows: maxRowsArg,
     save_csv: saveCsv,
+    timeout_ms: timeoutMs,
   } = args;
 
   const guard = validateReadOnlySql(query);
@@ -85,7 +86,9 @@ export async function handleExecuteQuery(
   const effectiveQuery = limitInjected ? injectLimit(query, maxRows) : query;
 
   try {
-    const result = await client.executeAdhocQuery(effectiveQuery, dataSourceId);
+    const result = await client.executeAdhocQuery(effectiveQuery, dataSourceId, {
+      timeoutMs,
+    });
     const data = result.query_result.data;
 
     const truncated = data.rows.length >= maxRows;

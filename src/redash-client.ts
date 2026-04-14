@@ -71,7 +71,8 @@ export class RedashClient {
 
   async executeAdhocQuery(
     query: string,
-    dataSourceId: number
+    dataSourceId: number,
+    options: { timeoutMs?: number } = {}
   ): Promise<RedashQueryResult> {
     this.assertDataSourceAllowed(dataSourceId);
     const payload = {
@@ -84,7 +85,7 @@ export class RedashClient {
     const res = await this.client.post<RedashJobResponse>("/api/query_results", payload);
 
     if (res.data.job) {
-      return await this.pollJob(res.data.job.id);
+      return await this.pollJob(res.data.job.id, options.timeoutMs);
     }
 
     return { query_result: res.data.query_result! };
@@ -205,12 +206,17 @@ export class RedashClient {
 
   private async pollJob(
     jobId: string,
-    timeout = 120000,
+    timeout?: number,
     interval = 1500
   ): Promise<RedashQueryResult> {
+    const effectiveTimeout =
+      timeout ??
+      (process.env.REDASH_QUERY_TIMEOUT_MS
+        ? Number(process.env.REDASH_QUERY_TIMEOUT_MS)
+        : 120000);
     const start = Date.now();
 
-    while (Date.now() - start < timeout) {
+    while (Date.now() - start < effectiveTimeout) {
       const res = await this.client.get<RedashJobStatusResponse>(`/api/jobs/${jobId}`);
       const job = res.data.job;
 
@@ -231,7 +237,7 @@ export class RedashClient {
       await new Promise((r) => setTimeout(r, interval));
     }
 
-    throw new Error(`Query timed out after ${timeout}ms`);
+    throw new Error(`Query timed out after ${effectiveTimeout}ms`);
   }
 
   formatError(error: unknown): string {

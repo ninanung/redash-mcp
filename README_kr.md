@@ -66,6 +66,7 @@ npm run build
 | `REDASH_ALLOWED_DS` | (선택) 허용할 데이터소스 ID 목록 (콤마 구분, 예: `1,3,7`). 설정 시 나머지 ID는 차단되고, `list_data_sources`도 허용된 것만 반환합니다. |
 | `REDASH_MCP_LOG` | (선택) 로그 레벨: `debug`, `info`(기본), `warn`, `error`, `silent`. MCP stdio 채널을 해치지 않도록 로그는 stderr로 출력됩니다. |
 | `REDASH_MCP_AUDIT_LOG` | (선택) 감사 로그 파일 경로. 기본값 `~/.redash-mcp/audit.log`. `off`로 설정 시 비활성화. 각 줄은 도구명·인자·수행시간·상태를 담은 JSON 레코드. |
+| `REDASH_QUERY_TIMEOUT_MS` | (선택) 기본 쿼리 타임아웃(ms, 기본 120000). `execute_query`의 `timeout_ms` 인자로 호출 단위 재정의 가능. |
 
 ## 도구
 
