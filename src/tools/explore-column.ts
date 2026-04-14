@@ -1,5 +1,5 @@
 import { RedashClient } from "@/redash-client.js";
-import { MetadataCache } from "@/metadata-cache.js";
+import { MetadataCache, isStale } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExploreColumnArgs } from "@/interfaces/tool-args.js";
 
@@ -18,7 +18,7 @@ export async function handleExploreColumn(
   for (const c of columns) {
     const key = `${c.table}.${c.column}`;
     const hit = !refresh ? metadataCache.getColumn(dataSourceId, key) : null;
-    if (hit) {
+    if (hit && !isStale(hit.updatedAt)) {
       cached.push(key);
     } else {
       toQuery.push(c);

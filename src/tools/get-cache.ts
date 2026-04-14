@@ -1,4 +1,4 @@
-import { MetadataCache } from "@/metadata-cache.js";
+import { MetadataCache, isStale } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { GetCacheArgs } from "@/interfaces/tool-args.js";
 
@@ -25,7 +25,8 @@ export async function handleGetCache(
         info.type === "integer"
           ? "integer (숫자 리터럴로 비교)"
           : "varchar (문자열로 비교)";
-      output.push(`\n[${key}] (${typeHint}) — ${info.updatedAt}`);
+      const staleTag = isStale(info.updatedAt) ? " [stale]" : "";
+      output.push(`\n[${key}] (${typeHint}) — ${info.updatedAt}${staleTag}`);
       for (const v of info.values) {
         output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
       }
@@ -39,7 +40,8 @@ export async function handleGetCache(
     for (const [key, info] of Object.entries(mappings)) {
       const header = Object.keys(info.entries[0] ?? {}).join(" | ");
       const rows = info.entries.map((r) => Object.values(r).join(" | "));
-      output.push(`\n[${key}] → ${info.mappingTable} — ${info.updatedAt}`);
+      const staleTag = isStale(info.updatedAt) ? " [stale]" : "";
+      output.push(`\n[${key}] → ${info.mappingTable} — ${info.updatedAt}${staleTag}`);
       output.push(header);
       output.push("─".repeat(header.length));
       output.push(rows.join("\n"));
@@ -51,8 +53,9 @@ export async function handleGetCache(
   if (Object.keys(recs).length > 0) {
     output.push("\n## 테이블 추천");
     for (const [key, rec] of Object.entries(recs)) {
+      const staleTag = isStale(rec.updatedAt) ? " [stale]" : "";
       output.push(
-        `\n"${key}" → ${rec.recommended} (${rec.reason}) — ${rec.updatedAt}`
+        `\n"${key}" → ${rec.recommended} (${rec.reason}) — ${rec.updatedAt}${staleTag}`
       );
       if (rec.avoid) {
         for (const [t, reason] of Object.entries(rec.avoid)) {

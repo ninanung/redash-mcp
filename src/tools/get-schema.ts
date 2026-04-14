@@ -1,6 +1,6 @@
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
-import { MetadataCache } from "@/metadata-cache.js";
+import { MetadataCache, isStale } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { GetSchemaArgs } from "@/interfaces/tool-args.js";
 
@@ -17,7 +17,7 @@ export async function handleGetSchema(
   if (keywords && keywords.length > 0 && !refresh) {
     for (const kw of keywords) {
       const rec = metadataCache.getTableRecommendation(dataSourceId, kw);
-      if (rec) {
+      if (rec && !isStale(rec.updatedAt)) {
         const avoidInfo = rec.avoid
           ? Object.entries(rec.avoid)
               .map(([t, reason]) => `  ⚠ ${t}: ${reason}`)

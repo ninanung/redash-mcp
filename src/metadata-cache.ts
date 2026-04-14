@@ -20,6 +20,21 @@ function dsKey(dataSourceId: number, key: string): string {
   return `ds${dataSourceId}:${key}`;
 }
 
+function ttlDays(): number | null {
+  const raw = process.env.REDASH_METADATA_TTL_DAYS;
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function isStale(updatedAt: string): boolean {
+  const days = ttlDays();
+  if (days === null) return false;
+  const t = Date.parse(updatedAt);
+  if (!Number.isFinite(t)) return false;
+  return Date.now() - t > days * 24 * 60 * 60 * 1000;
+}
+
 export class MetadataCache {
   private data: CacheData;
 

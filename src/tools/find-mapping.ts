@@ -1,6 +1,6 @@
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
-import { MetadataCache } from "@/metadata-cache.js";
+import { MetadataCache, isStale } from "@/metadata-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { FindMappingArgs } from "@/interfaces/tool-args.js";
 
@@ -17,7 +17,7 @@ export async function handleFindMapping(
   // 캐시 확인
   if (!refresh) {
     const hit = metadataCache.getMapping(dataSourceId, cacheKey);
-    if (hit) {
+    if (hit && !isStale(hit.updatedAt)) {
       const header = Object.keys(hit.entries[0] ?? {}).join(" | ");
       const rows = hit.entries.map((r) => Object.values(r).join(" | "));
       return {
