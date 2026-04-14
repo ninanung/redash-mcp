@@ -71,6 +71,7 @@ Restart Claude Code to activate the MCP tools.
 | Tool | Description |
 |------|-------------|
 | `list_data_sources` | List available data sources |
+| `self_test` | Diagnostic check — verifies env vars, Redash connectivity, and schema access |
 | `get_schema` | Fetch table/column schema (keyword filter, cached) |
 | `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; job polling handled automatically; auto-injects `LIMIT max_rows` — default 1000 — when the query has none) |
 | `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |

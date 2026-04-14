@@ -71,6 +71,7 @@ npm run build
 | 도구 | 설명 |
 |------|------|
 | `list_data_sources` | 데이터소스 목록 조회 |
+| `self_test` | 진단 도구 — 환경변수·Redash 연결·스키마 조회 가능 여부 점검 |
 | `get_schema` | 테이블/컬럼 스키마 조회 (키워드 필터링, 캐싱) |
 | `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리, LIMIT이 없으면 `max_rows`(기본 1000) 자동 주입) |
 | `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |

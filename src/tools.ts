@@ -25,12 +25,19 @@ import { handleListSavedQueries } from "@/tools/list-saved-queries.js";
 import { handleGetSavedQuery } from "@/tools/get-saved-query.js";
 import { handleExecuteSavedQuery } from "@/tools/execute-saved-query.js";
 import { handleSampleRows } from "@/tools/sample-rows.js";
+import { handleSelfTest } from "@/tools/self-test.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
     {
       name: "list_data_sources",
       description: "Redash 데이터소스 목록을 조회합니다.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "self_test",
+      description:
+        "MCP 서버 상태를 점검합니다. 환경변수·Redash 연결·스키마 조회 가능 여부를 확인합니다.",
       inputSchema: { type: "object", properties: {} },
     },
     {
@@ -285,6 +292,8 @@ export async function handleToolCall(
       return handleExecuteSavedQuery(args as ExecuteSavedQueryArgs, client);
     case "sample_rows":
       return handleSampleRows(args as SampleRowsArgs, client);
+    case "self_test":
+      return handleSelfTest(client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
