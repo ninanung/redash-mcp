@@ -109,3 +109,12 @@ export interface JoinHintsArgs extends ToolArgs {
   data_source_id: number;
   table: string;
 }
+
+export interface ExportMetadataCacheArgs extends ToolArgs {
+  path: string;
+}
+
+export interface ImportMetadataCacheArgs extends ToolArgs {
+  path: string;
+  mode?: "merge" | "replace";
+}

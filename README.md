@@ -92,6 +92,8 @@ Restart Claude Code to activate the MCP tools.
 | `list_dashboards` | List Redash dashboards (search supported) |
 | `get_dashboard` | Fetch widgets of a dashboard and the query IDs they reference |
 | `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |
+| `export_metadata_cache` | Export the metadata cache to a JSON file (share across a team or back up) |
+| `import_metadata_cache` | Import a metadata cache from a JSON file (merge/replace modes) |
 
 ## Usage Example
 

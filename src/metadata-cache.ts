@@ -143,6 +143,49 @@ export class MetadataCache {
     return `캐시 현황: 컬럼 ${colCount}건, 매핑 ${mapCount}건, 테이블추천 ${tblCount}건`;
   }
 
+  // --- Export / Import ---
+
+  exportTo(filePath: string): { columns: number; mappings: number; tables: number } {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(this.data, null, 2), "utf-8");
+    return {
+      columns: Object.keys(this.data.columns).length,
+      mappings: Object.keys(this.data.mappings).length,
+      tables: Object.keys(this.data.tables).length,
+    };
+  }
+
+  importFrom(
+    filePath: string,
+    mode: "merge" | "replace" = "merge"
+  ): { columns: number; mappings: number; tables: number } {
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<CacheData>;
+    const incoming: CacheData = {
+      columns: parsed.columns ?? {},
+      mappings: parsed.mappings ?? {},
+      tables: parsed.tables ?? {},
+    };
+    if (mode === "replace") {
+      this.data = incoming;
+    } else {
+      this.data = {
+        columns: { ...this.data.columns, ...incoming.columns },
+        mappings: { ...this.data.mappings, ...incoming.mappings },
+        tables: { ...this.data.tables, ...incoming.tables },
+      };
+    }
+    this.save();
+    return {
+      columns: Object.keys(incoming.columns).length,
+      mappings: Object.keys(incoming.mappings).length,
+      tables: Object.keys(incoming.tables).length,
+    };
+  }
+
   // --- Persistence ---
 
   private load(): CacheData {

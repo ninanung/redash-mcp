@@ -20,6 +20,8 @@ import type {
   ListDashboardsArgs,
   GetDashboardArgs,
   ExplainQueryArgs,
+  ExportMetadataCacheArgs,
+  ImportMetadataCacheArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -40,6 +42,8 @@ import { handleUpdateQuery } from "@/tools/update-query.js";
 import { handleListDashboards } from "@/tools/list-dashboards.js";
 import { handleGetDashboard } from "@/tools/get-dashboard.js";
 import { handleExplainQuery } from "@/tools/explain-query.js";
+import { handleExportMetadataCache } from "@/tools/export-metadata-cache.js";
+import { handleImportMetadataCache } from "@/tools/import-metadata-cache.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -388,6 +392,38 @@ export function getToolDefinitions(): ToolDefinition[] {
       },
     },
     {
+      name: "export_metadata_cache",
+      description:
+        "메타데이터 캐시를 JSON 파일로 내보냅니다. 팀원과 공유하거나 백업할 때 사용합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          path: {
+            type: "string",
+            description: "내보낼 파일 경로 (예: ./metadata-cache-backup.json)",
+          },
+        },
+        required: ["path"],
+      },
+    },
+    {
+      name: "import_metadata_cache",
+      description:
+        "JSON 파일에서 메타데이터 캐시를 가져옵니다. mode=merge(기본)는 기존 항목에 병합, mode=replace는 전체 교체.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "가져올 JSON 파일 경로" },
+          mode: {
+            type: "string",
+            enum: ["merge", "replace"],
+            description: "merge(기본): 병합 / replace: 전체 교체",
+          },
+        },
+        required: ["path"],
+      },
+    },
+    {
       name: "get_cache",
       description:
         "저장된 메타데이터 캐시를 조회합니다. 컬럼 타입/값, 매핑 테이블, 추천 테이블 정보를 확인할 수 있습니다.",
@@ -451,6 +487,10 @@ export async function handleToolCall(
       return handleGetDashboard(args as GetDashboardArgs, client);
     case "explain_query":
       return handleExplainQuery(args as ExplainQueryArgs, client);
+    case "export_metadata_cache":
+      return handleExportMetadataCache(args as ExportMetadataCacheArgs, metadataCache);
+    case "import_metadata_cache":
+      return handleImportMetadataCache(args as ImportMetadataCacheArgs, metadataCache);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
