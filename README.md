@@ -85,6 +85,8 @@ Restart Claude Code to activate the MCP tools.
 | `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |
 | `get_saved_query` | Fetch SQL and metadata of a saved query by ID |
 | `execute_saved_query` | Run a saved query by ID with optional parameters |
+| `list_dashboards` | List Redash dashboards (search supported) |
+| `get_dashboard` | Fetch widgets of a dashboard and the query IDs they reference |
 | `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |
 
 ## Usage Example

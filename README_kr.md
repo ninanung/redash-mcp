@@ -85,6 +85,8 @@ npm run build
 | `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
 | `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 |
 | `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능) |
+| `list_dashboards` | Redash 대시보드 목록 조회 (검색 지원) |
+| `get_dashboard` | 대시보드의 위젯과 참조하는 쿼리 ID 목록 조회 |
 | `get_cache` | 메타데이터 캐시 조회 (컬럼 타입/값, 매핑 테이블, 추천 테이블) |
 
 ## 사용 예시

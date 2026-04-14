@@ -49,6 +49,36 @@ export interface RedashSchemaResponse {
   schema: RedashSchemaTable[];
 }
 
+export interface RedashDashboardSummary {
+  id: number;
+  slug: string;
+  name: string;
+  tags?: string[];
+  updated_at?: string;
+}
+
+export interface RedashDashboardListResponse {
+  count: number;
+  page: number;
+  page_size: number;
+  results: RedashDashboardSummary[];
+}
+
+export interface RedashDashboardWidget {
+  id: number;
+  text?: string | null;
+  visualization?: {
+    id: number;
+    name: string;
+    type: string;
+    query?: RedashSavedQuery;
+  } | null;
+}
+
+export interface RedashDashboardDetail extends RedashDashboardSummary {
+  widgets: RedashDashboardWidget[];
+}
+
 export interface RedashJobResponse {
   job?: {
     id: string;

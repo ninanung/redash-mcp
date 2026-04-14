@@ -15,6 +15,8 @@ import type {
   RedashSchemaResponse,
   RedashJobResponse,
   RedashJobStatusResponse,
+  RedashDashboardListResponse,
+  RedashDashboardDetail,
 } from "@/interfaces/redash-client.js";
 
 export class RedashClient {
@@ -157,6 +159,30 @@ export class RedashClient {
   async getSavedQuery(queryId: number): Promise<RedashSavedQuery> {
     const res = await this.client.get<RedashSavedQuery>(
       `/api/queries/${queryId}`
+    );
+    return res.data;
+  }
+
+  async listDashboards(params: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<RedashDashboardListResponse> {
+    const query: Record<string, string | number> = {
+      page: params.page ?? 1,
+      page_size: params.pageSize ?? 25,
+    };
+    if (params.q) query.q = params.q;
+    const res = await this.client.get<RedashDashboardListResponse>(
+      "/api/dashboards",
+      { params: query }
+    );
+    return res.data;
+  }
+
+  async getDashboard(slugOrId: string | number): Promise<RedashDashboardDetail> {
+    const res = await this.client.get<RedashDashboardDetail>(
+      `/api/dashboards/${slugOrId}`
     );
     return res.data;
   }

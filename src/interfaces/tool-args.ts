@@ -47,6 +47,16 @@ export interface UpdateQueryArgs extends ToolArgs {
   tags?: string[];
 }
 
+export interface ListDashboardsArgs extends ToolArgs {
+  q?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface GetDashboardArgs extends ToolArgs {
+  id: string | number;
+}
+
 export interface GetCacheArgs extends ToolArgs {
   keyword?: string;
 }

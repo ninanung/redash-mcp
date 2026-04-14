@@ -17,6 +17,8 @@ import type {
   FindTableArgs,
   JoinHintsArgs,
   UpdateQueryArgs,
+  ListDashboardsArgs,
+  GetDashboardArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -34,6 +36,8 @@ import { handleDescribeTable } from "@/tools/describe-table.js";
 import { handleFindTable } from "@/tools/find-table.js";
 import { handleJoinHints } from "@/tools/join-hints.js";
 import { handleUpdateQuery } from "@/tools/update-query.js";
+import { handleListDashboards } from "@/tools/list-dashboards.js";
+import { handleGetDashboard } from "@/tools/get-dashboard.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -336,6 +340,34 @@ export function getToolDefinitions(): ToolDefinition[] {
       },
     },
     {
+      name: "list_dashboards",
+      description:
+        "Redash 대시보드 목록을 조회합니다. 기존 지표 정의를 참고할 때 사용하세요.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          q: { type: "string", description: "제목/설명 검색어" },
+          page: { type: "number", description: "페이지 번호 (기본 1)" },
+          page_size: { type: "number", description: "페이지 크기 (기본 25)" },
+        },
+      },
+    },
+    {
+      name: "get_dashboard",
+      description:
+        "대시보드의 위젯과 위젯이 참조하는 쿼리 목록을 조회합니다. 대시보드를 구성하는 쿼리 ID를 확보해 execute_saved_query로 재실행할 수 있습니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: ["string", "number"],
+            description: "대시보드 ID 또는 slug",
+          },
+        },
+        required: ["id"],
+      },
+    },
+    {
       name: "get_cache",
       description:
         "저장된 메타데이터 캐시를 조회합니다. 컬럼 타입/값, 매핑 테이블, 추천 테이블 정보를 확인할 수 있습니다.",
@@ -393,6 +425,10 @@ export async function handleToolCall(
       return handleJoinHints(args as JoinHintsArgs, client, schemaCache);
     case "update_query":
       return handleUpdateQuery(args as UpdateQueryArgs, client);
+    case "list_dashboards":
+      return handleListDashboards(args as ListDashboardsArgs, client);
+    case "get_dashboard":
+      return handleGetDashboard(args as GetDashboardArgs, client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
