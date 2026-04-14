@@ -47,7 +47,7 @@ export async function handleExecuteSavedQuery(
       { type: "text", text: resultJson },
       {
         type: "text",
-        text: `Executed saved query #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${notesText}`,
+        text: `Executed saved query #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${notesText}\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.`,
       },
     ],
   };

@@ -40,7 +40,7 @@ export async function handleExplainQuery(
         },
         {
           type: "text",
-          text: `Executed SQL:\n\`\`\`sql\n${explainSql}\n\`\`\`\n\nNote: EXPLAIN support and output format vary by engine (PostgreSQL, MySQL, Presto, BigQuery, etc.). If it fails, run engine-specific syntax directly (e.g. EXPLAIN ANALYZE, EXPLAIN FORMAT=JSON).`,
+          text: `Executed SQL:\n\`\`\`sql\n${explainSql}\n\`\`\`\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.\n\nNote: EXPLAIN support and output format vary by engine (PostgreSQL, MySQL, Presto, BigQuery, etc.). If it fails, run engine-specific syntax directly (e.g. EXPLAIN ANALYZE, EXPLAIN FORMAT=JSON).`,
         },
       ],
     };

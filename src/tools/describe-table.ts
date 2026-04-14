@@ -60,7 +60,7 @@ export async function handleDescribeTable(
       { type: "text", text: JSON.stringify(body, null, 2) },
       {
         type: "text",
-        text: `Sample query:\n\`\`\`sql\n${sql}\n\`\`\``,
+        text: `Sample query:\n\`\`\`sql\n${sql}\n\`\`\`\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.`,
       },
     ],
   };

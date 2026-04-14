@@ -188,7 +188,7 @@ export async function handleExecuteQuery(
         },
         {
           type: "text",
-          text: `Executed SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\nUse the save_query tool to save this query to Redash.\nShow the executed SQL to the user and confirm whether to save it and with what name.`,
+          text: `Executed SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.\n\nTo save this query to Redash, use the save_query tool (ask the user for confirmation and a name).`,
         },
       ],
     };
