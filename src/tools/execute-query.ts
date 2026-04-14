@@ -4,6 +4,7 @@ import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { validateReadOnlySql } from "@/sql-guard.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
+import { computeSummary, summarizeThreshold } from "@/summarize.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
 import type { RedashColumn } from "@/interfaces/redash-client.js";
@@ -72,6 +73,7 @@ export async function handleExecuteQuery(
     max_rows: maxRowsArg,
     save_csv: saveCsv,
     timeout_ms: timeoutMs,
+    summarize = "auto",
   } = args;
 
   const guard = validateReadOnlySql(query);
@@ -118,19 +120,43 @@ export async function handleExecuteQuery(
       notes.push(`결과를 CSV로 저장했습니다: ${csvPath}`);
     }
 
-    const resultJson = JSON.stringify(
-      {
-        columns: data.columns.map((c) => ({
-          name: c.name,
-          type: c.type,
-        })),
-        rows: data.rows,
-        row_count: data.rows.length,
-        runtime: result.query_result.runtime,
-      },
-      null,
-      2
-    );
+    const threshold = summarizeThreshold();
+    const shouldSummarize =
+      summarize === "always" ||
+      (summarize === "auto" && data.rows.length > threshold && !saveCsv);
+
+    let resultJson: string;
+    if (shouldSummarize) {
+      const summary = computeSummary(data.columns, data.rows);
+      resultJson = JSON.stringify(
+        {
+          summarized: true,
+          total_rows: summary.total_rows,
+          columns: summary.columns,
+          sample_rows: summary.sample_rows,
+          runtime: result.query_result.runtime,
+        },
+        null,
+        2
+      );
+      notes.push(
+        `결과가 ${data.rows.length}행으로 임계치(${threshold})를 초과하여 요약되었습니다. 전체 행은 save_csv로 파일 저장하거나 summarize:"never"로 다시 호출하세요.`
+      );
+    } else {
+      resultJson = JSON.stringify(
+        {
+          columns: data.columns.map((c) => ({
+            name: c.name,
+            type: c.type,
+          })),
+          rows: data.rows,
+          row_count: data.rows.length,
+          runtime: result.query_result.runtime,
+        },
+        null,
+        2
+      );
+    }
 
     const notesText = notes.length > 0 ? `\n\n주의:\n- ${notes.join("\n- ")}` : "";
 

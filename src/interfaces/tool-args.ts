@@ -12,6 +12,7 @@ export interface ExecuteQueryArgs extends ToolArgs {
   max_rows?: number;
   save_csv?: string;
   timeout_ms?: number;
+  summarize?: "auto" | "always" | "never";
 }
 
 export interface ExploreColumnArgs extends ToolArgs {

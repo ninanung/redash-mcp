@@ -113,6 +113,12 @@ export function getToolDefinitions(): ToolDefinition[] {
             description:
               "쿼리 실행 타임아웃(ms). 기본 120000. REDASH_QUERY_TIMEOUT_MS 환경변수로도 조정 가능.",
           },
+          summarize: {
+            type: "string",
+            enum: ["auto", "always", "never"],
+            description:
+              "auto(기본): 결과가 REDASH_SUMMARIZE_THRESHOLD(기본 500) 초과 시 요약 / always: 항상 요약 / never: 항상 전체 행 반환. save_csv 지정 시 auto는 요약하지 않음.",
+          },
         },
         required: ["data_source_id", "query"],
       },
