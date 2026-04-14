@@ -1,7 +1,10 @@
+import * as fs from "fs";
+import * as path from "path";
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
+import type { RedashColumn } from "@/interfaces/redash-client.js";
 
 const SCHEMA_ERROR_PATTERNS = [
   /table.*not found/i,
@@ -32,12 +35,41 @@ function injectLimit(sql: string, limit: number): string {
   return `${trimmed}\nLIMIT ${limit}`;
 }
 
+function toCsvValue(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function writeCsv(
+  filePath: string,
+  columns: RedashColumn[],
+  rows: Record<string, unknown>[]
+): string {
+  const resolved = path.resolve(filePath);
+  const dir = path.dirname(resolved);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  const header = columns.map((c) => toCsvValue(c.name)).join(",");
+  const lines = rows.map((r) =>
+    columns.map((c) => toCsvValue(r[c.name])).join(",")
+  );
+  fs.writeFileSync(resolved, [header, ...lines].join("\n"), "utf-8");
+  return resolved;
+}
+
 export async function handleExecuteQuery(
   args: ExecuteQueryArgs,
   client: RedashClient,
   schemaCache: SchemaCache
 ): Promise<ToolResult> {
-  const { data_source_id: dataSourceId, query, max_rows: maxRowsArg } = args;
+  const {
+    data_source_id: dataSourceId,
+    query,
+    max_rows: maxRowsArg,
+    save_csv: saveCsv,
+  } = args;
 
   const trimmed = query.trim().toUpperCase();
   if (!trimmed.startsWith("SELECT") && !trimmed.startsWith("WITH")) {
@@ -66,6 +98,12 @@ export async function handleExecuteQuery(
       notes.push(
         `결과가 ${maxRows}행에 도달하여 잘렸을 수 있습니다. 더 많은 행이 필요하면 max_rows를 늘리거나 쿼리에 LIMIT을 직접 지정하세요.`
       );
+    }
+
+    let csvPath: string | null = null;
+    if (saveCsv) {
+      csvPath = writeCsv(saveCsv, data.columns, data.rows);
+      notes.push(`결과를 CSV로 저장했습니다: ${csvPath}`);
     }
 
     const resultJson = JSON.stringify(

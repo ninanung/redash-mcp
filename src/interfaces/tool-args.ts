@@ -10,6 +10,7 @@ export interface ExecuteQueryArgs extends ToolArgs {
   data_source_id: number;
   query: string;
   max_rows?: number;
+  save_csv?: string;
 }
 
 export interface ExploreColumnArgs extends ToolArgs {

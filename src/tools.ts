@@ -91,6 +91,11 @@ export function getToolDefinitions(): ToolDefinition[] {
             description:
               "LIMIT이 없을 때 자동 주입할 최대 행 수 (기본 1000). 전체 결과를 원하면 쿼리에 LIMIT을 직접 지정하세요.",
           },
+          save_csv: {
+            type: "string",
+            description:
+              "지정 시 결과를 CSV 파일로 저장합니다 (경로). 대용량 결과를 모델 컨텍스트 밖으로 빼낼 때 사용.",
+          },
         },
         required: ["data_source_id", "query"],
       },
