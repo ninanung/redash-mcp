@@ -8,6 +8,7 @@ import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { MetadataCache } from "@/metadata-cache.js";
 import { getToolDefinitions, handleToolCall } from "@/tools.js";
+import { logger } from "@/logger.js";
 
 const REDASH_URL = process.env.REDASH_URL;
 const REDASH_API_KEY = process.env.REDASH_API_KEY;
@@ -44,9 +45,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  const started = Date.now();
+  logger.debug(`tool call: ${name}`, args);
+
   try {
-    return await handleToolCall(name, args ?? {}, client, schemaCache, metadataCache);
+    const result = await handleToolCall(name, args ?? {}, client, schemaCache, metadataCache);
+    logger.info(`tool ${name} done in ${Date.now() - started}ms`);
+    return result;
   } catch (error) {
+    logger.error(`tool ${name} failed:`, client.formatError(error));
     return {
       content: [
         { type: "text" as const, text: `Error: ${client.formatError(error)}` },
@@ -59,6 +66,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
+  logger.info(
+    `redash-mcp started (log level: ${logger.level}, allowed DS: ${
+      client.getAllowedDataSources()?.join(",") ?? "all"
+    })`
+  );
 }
 
 main().catch((error) => {

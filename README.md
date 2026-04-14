@@ -64,6 +64,7 @@ Restart Claude Code to activate the MCP tools.
 | `REDASH_URL` | Redash server URL |
 | `REDASH_API_KEY` | Redash API Key |
 | `REDASH_ALLOWED_DS` | (optional) Comma-separated list of allowed data source IDs (e.g. `1,3,7`). When set, all other IDs are blocked and `list_data_sources` only returns allowed ones. |
+| `REDASH_MCP_LOG` | (optional) Log level: `debug`, `info` (default), `warn`, `error`, `silent`. Logs go to stderr to avoid corrupting the MCP stdio channel. |
 
 ## Tools
 
