@@ -39,3 +39,20 @@ export interface SaveQueryArgs extends ToolArgs {
 export interface GetCacheArgs extends ToolArgs {
   keyword?: string;
 }
+
+export interface ListSavedQueriesArgs extends ToolArgs {
+  q?: string;
+  data_source_id?: number;
+  page?: number;
+  page_size?: number;
+}
+
+export interface GetSavedQueryArgs extends ToolArgs {
+  query_id: number;
+}
+
+export interface ExecuteSavedQueryArgs extends ToolArgs {
+  query_id: number;
+  parameters?: Record<string, unknown>;
+  max_rows?: number;
+}

@@ -11,6 +11,7 @@ import type {
   RedashDataSource,
   RedashSchemaTable,
   RedashSavedQuery,
+  RedashSavedQueryListResponse,
   RedashSchemaResponse,
   RedashJobResponse,
   RedashJobStatusResponse,
@@ -70,6 +71,51 @@ export class RedashClient {
       data_source_id: dataSourceId,
     });
     return res.data;
+  }
+
+  async listSavedQueries(params: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    dataSourceId?: number;
+  } = {}): Promise<RedashSavedQueryListResponse> {
+    const query: Record<string, string | number> = {
+      page: params.page ?? 1,
+      page_size: params.pageSize ?? 25,
+    };
+    if (params.q) query.q = params.q;
+    const res = await this.client.get<RedashSavedQueryListResponse>(
+      "/api/queries",
+      { params: query }
+    );
+    const data = res.data;
+    if (params.dataSourceId !== undefined) {
+      data.results = data.results.filter(
+        (q) => q.data_source_id === params.dataSourceId
+      );
+    }
+    return data;
+  }
+
+  async getSavedQuery(queryId: number): Promise<RedashSavedQuery> {
+    const res = await this.client.get<RedashSavedQuery>(
+      `/api/queries/${queryId}`
+    );
+    return res.data;
+  }
+
+  async executeSavedQuery(
+    queryId: number,
+    parameters: Record<string, unknown> = {}
+  ): Promise<RedashQueryResult> {
+    const res = await this.client.post<RedashJobResponse>(
+      `/api/queries/${queryId}/results`,
+      { parameters, max_age: 0 }
+    );
+    if (res.data.job) {
+      return await this.pollJob(res.data.job.id);
+    }
+    return { query_result: res.data.query_result! };
   }
 
   private async pollJob(

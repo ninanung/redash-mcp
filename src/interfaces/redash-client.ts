@@ -33,6 +33,16 @@ export interface RedashSavedQuery {
   name: string;
   query: string;
   data_source_id: number;
+  description?: string | null;
+  tags?: string[];
+  updated_at?: string;
+}
+
+export interface RedashSavedQueryListResponse {
+  count: number;
+  page: number;
+  page_size: number;
+  results: RedashSavedQuery[];
 }
 
 export interface RedashSchemaResponse {

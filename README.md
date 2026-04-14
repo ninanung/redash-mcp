@@ -74,6 +74,9 @@ Restart Claude Code to activate the MCP tools.
 | `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |
 | `find_mapping` | Automatically find mapping tables for numeric code columns |
 | `save_query` | Save a SQL query to Redash |
+| `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |
+| `get_saved_query` | Fetch SQL and metadata of a saved query by ID |
+| `execute_saved_query` | Run a saved query by ID with optional parameters |
 | `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |
 
 ## Usage Example

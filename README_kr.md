@@ -74,6 +74,9 @@ npm run build
 | `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |
 | `find_mapping` | 숫자 코드 컬럼의 매핑 테이블 자동 탐색 |
 | `save_query` | SQL을 Redash에 저장 |
+| `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
+| `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 |
+| `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능) |
 | `get_cache` | 메타데이터 캐시 조회 (컬럼 타입/값, 매핑 테이블, 추천 테이블) |
 
 ## 사용 예시

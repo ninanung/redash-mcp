@@ -9,6 +9,9 @@ import type {
   FindMappingArgs,
   SaveQueryArgs,
   GetCacheArgs,
+  ListSavedQueriesArgs,
+  GetSavedQueryArgs,
+  ExecuteSavedQueryArgs,
 } from "@/interfaces/tool-args.js";
 import { handleListDataSources } from "@/tools/list-data-sources.js";
 import { handleGetSchema } from "@/tools/get-schema.js";
@@ -17,6 +20,9 @@ import { handleExploreColumn } from "@/tools/explore-column.js";
 import { handleFindMapping } from "@/tools/find-mapping.js";
 import { handleSaveQuery } from "@/tools/save-query.js";
 import { handleGetCache } from "@/tools/get-cache.js";
+import { handleListSavedQueries } from "@/tools/list-saved-queries.js";
+import { handleGetSavedQuery } from "@/tools/get-saved-query.js";
+import { handleExecuteSavedQuery } from "@/tools/execute-saved-query.js";
 
 export function getToolDefinitions(): ToolDefinition[] {
   return [
@@ -154,6 +160,55 @@ export function getToolDefinitions(): ToolDefinition[] {
       },
     },
     {
+      name: "list_saved_queries",
+      description:
+        "Redash에 저장된 쿼리 목록을 조회합니다. 키워드 검색과 데이터소스 필터를 지원합니다. 팀이 이미 검증한 쿼리를 출발점으로 삼을 때 사용하세요.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          q: { type: "string", description: "제목/설명 검색어" },
+          data_source_id: {
+            type: "number",
+            description: "데이터소스로 필터링",
+          },
+          page: { type: "number", description: "페이지 번호 (기본 1)" },
+          page_size: { type: "number", description: "페이지 크기 (기본 25)" },
+        },
+      },
+    },
+    {
+      name: "get_saved_query",
+      description: "저장된 쿼리의 SQL과 메타데이터를 조회합니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query_id: { type: "number", description: "쿼리 ID" },
+        },
+        required: ["query_id"],
+      },
+    },
+    {
+      name: "execute_saved_query",
+      description:
+        "저장된 쿼리를 실행하고 결과를 반환합니다. parameters로 쿼리 파라미터를 전달할 수 있습니다.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query_id: { type: "number", description: "쿼리 ID" },
+          parameters: {
+            type: "object",
+            description: "쿼리 파라미터 (예: { \"date\": \"2026-01-01\" })",
+            additionalProperties: true,
+          },
+          max_rows: {
+            type: "number",
+            description: "결과에 포함할 최대 행 수 (기본 1000)",
+          },
+        },
+        required: ["query_id"],
+      },
+    },
+    {
       name: "get_cache",
       description:
         "저장된 메타데이터 캐시를 조회합니다. 컬럼 타입/값, 매핑 테이블, 추천 테이블 정보를 확인할 수 있습니다.",
@@ -193,6 +248,12 @@ export async function handleToolCall(
       return handleSaveQuery(args as SaveQueryArgs, client);
     case "get_cache":
       return handleGetCache(args as GetCacheArgs, metadataCache);
+    case "list_saved_queries":
+      return handleListSavedQueries(args as ListSavedQueriesArgs, client);
+    case "get_saved_query":
+      return handleGetSavedQuery(args as GetSavedQueryArgs, client);
+    case "execute_saved_query":
+      return handleExecuteSavedQuery(args as ExecuteSavedQueryArgs, client);
     default:
       return {
         content: [{ type: "text", text: `Unknown tool: ${name}` }],
