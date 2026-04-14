@@ -24,7 +24,7 @@ export async function handleFindMapping(
         content: [
           {
             type: "text",
-            text: `[캐시됨] 매핑 테이블: ${hit.mappingTable}\n\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
+            text: `[cached] Mapping table: ${hit.mappingTable}\n\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
           },
         ],
       };
@@ -82,7 +82,7 @@ export async function handleFindMapping(
       content: [
         {
           type: "text",
-          text: `매핑 테이블을 찾지 못했습니다.\n탐색 패턴: ${patterns.join(", ")}\n사용자에게 코드값의 의미를 직접 확인하세요.`,
+          text: `Mapping table not found.\nPatterns tried: ${patterns.join(", ")}\nAsk the user directly what the code values mean.`,
         },
       ],
     };
@@ -119,7 +119,7 @@ export async function handleFindMapping(
     content: [
       {
         type: "text",
-        text: `[새로 조회] 매핑 테이블: ${mappingTable}\n${candidates.length > 1 ? `(다른 후보: ${candidates.slice(1).join(", ")})\n` : ""}\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
+        text: `[fresh] Mapping table: ${mappingTable}\n${candidates.length > 1 ? `(other candidates: ${candidates.slice(1).join(", ")})\n` : ""}\n${header}\n${"─".repeat(header.length)}\n${rows.join("\n")}`,
       },
     ],
   };

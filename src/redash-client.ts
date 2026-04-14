@@ -44,7 +44,7 @@ export class RedashClient {
     if (this.allowedDataSources && !this.allowedDataSources.has(dataSourceId)) {
       const allowed = [...this.allowedDataSources].join(", ");
       throw new Error(
-        `data_source_id ${dataSourceId}는 허용되지 않았습니다. REDASH_ALLOWED_DS=${allowed}`
+        `data_source_id ${dataSourceId} is not allowed. REDASH_ALLOWED_DS=${allowed}`
       );
     }
   }

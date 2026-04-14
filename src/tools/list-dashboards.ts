@@ -17,8 +17,8 @@ export async function handleListDashboards(
     return `#${d.id} (${d.slug}): ${d.name}${tags}`;
   });
 
-  const header = `대시보드 ${result.results.length}건 (page ${result.page}, total ${result.count})`;
-  const body = lines.length > 0 ? lines.join("\n") : "(결과 없음)";
+  const header = `${result.results.length} dashboards (page ${result.page}, total ${result.count})`;
+  const body = lines.length > 0 ? lines.join("\n") : "(no results)";
 
   return { content: [{ type: "text", text: `${header}\n\n${body}` }] };
 }

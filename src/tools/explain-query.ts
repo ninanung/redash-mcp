@@ -12,7 +12,7 @@ export async function handleExplainQuery(
   const guard = validateReadOnlySql(query);
   if (!guard.ok) {
     return {
-      content: [{ type: "text", text: guard.reason ?? "쿼리가 거부되었습니다." }],
+      content: [{ type: "text", text: guard.reason ?? "Query rejected." }],
       isError: true,
     };
   }
@@ -40,7 +40,7 @@ export async function handleExplainQuery(
         },
         {
           type: "text",
-          text: `실행된 SQL:\n\`\`\`sql\n${explainSql}\n\`\`\`\n\n주의: EXPLAIN 구문은 데이터소스 엔진(PostgreSQL, MySQL, Presto, BigQuery 등)마다 지원 여부와 출력 포맷이 다릅니다. 실패 시 엔진별 문법(EXPLAIN ANALYZE, EXPLAIN FORMAT=JSON 등)으로 직접 실행해보세요.`,
+          text: `Executed SQL:\n\`\`\`sql\n${explainSql}\n\`\`\`\n\nNote: EXPLAIN support and output format vary by engine (PostgreSQL, MySQL, Presto, BigQuery, etc.). If it fails, run engine-specific syntax directly (e.g. EXPLAIN ANALYZE, EXPLAIN FORMAT=JSON).`,
         },
       ],
     };
@@ -49,7 +49,7 @@ export async function handleExplainQuery(
       content: [
         {
           type: "text",
-          text: `EXPLAIN 실패: ${client.formatError(err)}\n\n데이터소스가 EXPLAIN을 지원하지 않거나 문법이 다를 수 있습니다.`,
+          text: `EXPLAIN failed: ${client.formatError(err)}\n\nThe data source may not support EXPLAIN or may use different syntax.`,
         },
       ],
       isError: true,

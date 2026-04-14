@@ -44,7 +44,7 @@ export async function handleSampleRows(
       { type: "text", text: resultJson },
       {
         type: "text",
-        text: `실행된 SQL:\n\`\`\`sql\n${sql}\n\`\`\``,
+        text: `Executed SQL:\n\`\`\`sql\n${sql}\n\`\`\``,
       },
     ],
   };

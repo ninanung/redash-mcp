@@ -18,8 +18,8 @@ export async function handleListSavedQueries(
     return `#${q.id} (ds=${q.data_source_id}): ${q.name}${tags}`;
   });
 
-  const header = `저장된 쿼리 ${result.results.length}건 (page ${result.page}, total ${result.count})`;
-  const body = lines.length > 0 ? lines.join("\n") : "(결과 없음)";
+  const header = `${result.results.length} saved queries (page ${result.page}, total ${result.count})`;
+  const body = lines.length > 0 ? lines.join("\n") : "(no results)";
 
   return {
     content: [{ type: "text", text: `${header}\n\n${body}` }],

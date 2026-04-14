@@ -16,7 +16,7 @@ export async function handleJoinHints(
   if (!target) {
     return {
       content: [
-        { type: "text", text: `테이블을 찾을 수 없습니다: ${table}` },
+        { type: "text", text: `Table not found: ${table}` },
       ],
       isError: true,
     };
@@ -40,7 +40,7 @@ export async function handleJoinHints(
     join_candidates: hints,
     candidate_count: hints.length,
     note:
-      "shared_columns는 단순 컬럼명 일치 기반이며, 실제 외래키 관계를 보장하지 않습니다. 타입·값을 explore_column으로 검증하세요.",
+      "shared_columns is based on column-name matching only and does not guarantee a true foreign-key relationship. Verify types and values with explore_column.",
   };
 
   return {

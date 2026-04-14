@@ -24,7 +24,7 @@ export async function handleGetSchema(
               .join("\n")
           : "";
         recommendations.push(
-          `[캐시 추천] "${kw}" → ${rec.recommended} (${rec.reason})${avoidInfo ? "\n" + avoidInfo : ""}`
+          `[cached recommendation] "${kw}" → ${rec.recommended} (${rec.reason})${avoidInfo ? "\n" + avoidInfo : ""}`
         );
       }
     }
@@ -42,7 +42,7 @@ export async function handleGetSchema(
       content: [
         {
           type: "text",
-          text: `매칭되는 테이블이 없습니다. 전체 ${tables.length}개 테이블 중 키워드와 일치하는 항목 없음.`,
+          text: `No matching tables. Out of ${tables.length} tables, none match the keywords.`,
         },
       ],
     };
@@ -60,7 +60,7 @@ export async function handleGetSchema(
       content: [
         {
           type: "text",
-          text: `${recPrefix}${filtered.length}개 테이블 (이름만 표시):\n${names.join("\n")}`,
+          text: `${recPrefix}${filtered.length} tables (names only):\n${names.join("\n")}`,
         },
       ],
     };
@@ -71,13 +71,13 @@ export async function handleGetSchema(
     .join("\n");
 
   const cached = schemaCache.isCached(dataSourceId);
-  const prefix = cached && !refresh ? "[캐시됨] " : "[새로 조회] ";
+  const prefix = cached && !refresh ? "[cached] " : "[fresh] ";
 
   return {
     content: [
       {
         type: "text",
-        text: `${recPrefix}${prefix}${filtered.length}개 테이블:\n${output}`,
+        text: `${recPrefix}${prefix}${filtered.length} tables:\n${output}`,
       },
     ],
   };

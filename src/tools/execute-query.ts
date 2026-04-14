@@ -81,7 +81,7 @@ export async function handleExecuteQuery(
   const guard = validateReadOnlySql(query);
   if (!guard.ok) {
     return {
-      content: [{ type: "text", text: guard.reason ?? "쿼리가 거부되었습니다." }],
+      content: [{ type: "text", text: guard.reason ?? "Query rejected." }],
       isError: true,
     };
   }
@@ -95,7 +95,7 @@ export async function handleExecuteQuery(
       content: [
         {
           type: "text",
-          text: "쿼리에 이미 LIMIT 절이 있어 offset 인자가 무시됩니다. LIMIT/OFFSET을 SQL에 직접 지정하거나 LIMIT을 제거하고 max_rows/offset을 사용하세요.",
+          text: "The query already has a LIMIT clause, so the offset argument is ignored. Either specify LIMIT/OFFSET in the SQL directly, or remove LIMIT and use max_rows/offset.",
         },
       ],
       isError: true,
@@ -117,21 +117,21 @@ export async function handleExecuteQuery(
     const truncated = data.rows.length >= maxRows;
     const notes: string[] = [];
     if (maskedCols.length > 0) {
-      notes.push(`마스킹된 컬럼: ${maskedCols.join(", ")}`);
+      notes.push(`Masked columns: ${maskedCols.join(", ")}`);
     }
     if (limitInjected) {
-      notes.push(`LIMIT ${maxRows}을 자동 주입했습니다.`);
+      notes.push(`Auto-injected LIMIT ${maxRows}.`);
     }
     if (truncated) {
       notes.push(
-        `결과가 ${maxRows}행에 도달하여 잘렸을 수 있습니다. 더 많은 행이 필요하면 max_rows를 늘리거나 쿼리에 LIMIT을 직접 지정하세요.`
+        `Result reached ${maxRows} rows and may have been truncated. Increase max_rows or specify LIMIT directly in the query for more rows.`
       );
     }
 
     let csvPath: string | null = null;
     if (saveCsv) {
       csvPath = writeCsv(saveCsv, data.columns, data.rows);
-      notes.push(`결과를 CSV로 저장했습니다: ${csvPath}`);
+      notes.push(`Saved result to CSV: ${csvPath}`);
     }
 
     const threshold = summarizeThreshold();
@@ -155,11 +155,11 @@ export async function handleExecuteQuery(
       );
       if (summarize === "always") {
         notes.push(
-          `summarize:"always"로 강제 요약했습니다 (${data.rows.length}행). 전체 행이 필요하면 summarize를 생략하거나 "never"로 호출하세요.`
+          `Forced summary via summarize:"always" (${data.rows.length} rows). Omit summarize or pass "never" to get full rows.`
         );
       } else {
         notes.push(
-          `결과가 ${data.rows.length}행으로 임계치(${threshold})를 초과하여 요약되었습니다. 전체 행은 save_csv로 파일 저장하거나 summarize:"never"로 다시 호출하세요.`
+          `Result had ${data.rows.length} rows, exceeding threshold (${threshold}), so it was summarized. Save full rows via save_csv, or call again with summarize:"never".`
         );
       }
     } else {
@@ -178,7 +178,7 @@ export async function handleExecuteQuery(
       );
     }
 
-    const notesText = notes.length > 0 ? `\n\n주의:\n- ${notes.join("\n- ")}` : "";
+    const notesText = notes.length > 0 ? `\n\nNotes:\n- ${notes.join("\n- ")}` : "";
 
     return {
       content: [
@@ -188,7 +188,7 @@ export async function handleExecuteQuery(
         },
         {
           type: "text",
-          text: `실행된 SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\n이 쿼리를 Redash에 저장하려면 save_query 도구를 사용하세요.\n사용자에게 실행된 SQL과 함께 저장 여부 및 쿼리 이름을 확인해주세요.`,
+          text: `Executed SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\nUse the save_query tool to save this query to Redash.\nShow the executed SQL to the user and confirm whether to save it and with what name.`,
         },
       ],
     };
@@ -200,7 +200,7 @@ export async function handleExecuteQuery(
         content: [
           {
             type: "text",
-            text: `쿼리 실패: ${message}\n\n현재 엔진이 OFFSET 문법을 지원하지 않습니다 (Presto <0.176 등). offset 대신 쿼리에 WHERE 조건이나 ROW_NUMBER() 기반 페이지네이션을 직접 작성하세요.`,
+            text: `Query failed: ${message}\n\nThe current engine does not support OFFSET (e.g. Presto <0.176). Instead of offset, paginate via a WHERE clause or ROW_NUMBER()-based logic in your query.`,
           },
         ],
         isError: true,
@@ -216,7 +216,7 @@ export async function handleExecuteQuery(
         content: [
           {
             type: "text",
-            text: `쿼리 실패: ${message}\n\n스키마 캐시를 갱신했습니다 (${refreshed.length}개 테이블). 갱신된 스키마로 쿼리를 다시 작성해주세요.\n\n테이블 목록:\n${tableNames.join("\n")}`,
+            text: `Query failed: ${message}\n\nSchema cache refreshed (${refreshed.length} tables). Please rewrite the query using the updated schema.\n\nTables:\n${tableNames.join("\n")}`,
           },
         ],
         isError: true,

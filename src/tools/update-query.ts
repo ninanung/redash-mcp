@@ -18,7 +18,7 @@ export async function handleUpdateQuery(
       content: [
         {
           type: "text",
-          text: "업데이트할 필드(name/query/description/tags) 중 하나 이상을 지정해주세요.",
+          text: "Specify at least one field to update (name/query/description/tags).",
         },
       ],
       isError: true,
@@ -37,7 +37,7 @@ export async function handleUpdateQuery(
     content: [
       {
         type: "text",
-        text: `쿼리 #${updated.id} 업데이트 완료\nURL: ${url}\nname: ${updated.name}`,
+        text: `Query #${updated.id} updated\nURL: ${url}\nname: ${updated.name}`,
       },
     ],
   };

@@ -20,7 +20,7 @@ export async function handleSaveQuery(
   });
   const url = `${process.env.REDASH_URL}/queries/${saved.id}`;
 
-  const lines = [`쿼리 저장 완료!`, `ID: ${saved.id}`, `URL: ${url}`];
+  const lines = [`Query saved!`, `ID: ${saved.id}`, `URL: ${url}`];
   if (description) lines.push(`description: ${description}`);
   if (tags && tags.length > 0) lines.push(`tags: ${tags.join(", ")}`);
 

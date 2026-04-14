@@ -32,11 +32,11 @@ export async function handleExploreColumn(
     const info = metadataCache.getColumn(dataSourceId, key)!;
     const typeHint =
       info.type === "integer"
-        ? "integer (숫자 리터럴로 비교)"
-        : "varchar (문자열로 비교)";
-    output.push(`\n[${key}] [캐시됨] (추정 타입: ${typeHint})`);
+        ? "integer (compare as numeric literal)"
+        : "varchar (compare as string)";
+    output.push(`\n[${key}] [cached] (inferred type: ${typeHint})`);
     for (const v of info.values) {
-      output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+      output.push(`  ${v.val} : ${v.cnt.toLocaleString()} rows`);
     }
   }
 
@@ -67,12 +67,12 @@ export async function handleExploreColumn(
       const allNumeric = values.every((v) => /^\d+$/.test(v.val));
       const colType = allNumeric ? "integer" : "varchar";
       const typeHint = allNumeric
-        ? "integer (숫자 리터럴로 비교)"
-        : "varchar (문자열로 비교)";
+        ? "integer (compare as numeric literal)"
+        : "varchar (compare as string)";
 
-      output.push(`\n[${col}] [새로 조회] (추정 타입: ${typeHint})`);
+      output.push(`\n[${col}] [fresh] (inferred type: ${typeHint})`);
       for (const v of values) {
-        output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+        output.push(`  ${v.val} : ${v.cnt.toLocaleString()} rows`);
       }
 
       // 캐시 저장

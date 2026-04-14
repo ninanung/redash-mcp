@@ -19,7 +19,7 @@ export async function handleFindTable(
       content: [
         {
           type: "text",
-          text: "column 또는 table_keyword 중 하나 이상을 지정해주세요.",
+          text: "Specify at least one of column or table_keyword.",
         },
       ],
       isError: true,

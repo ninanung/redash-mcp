@@ -12,7 +12,7 @@ export async function handleExportMetadataCache(
     content: [
       {
         type: "text",
-        text: `캐시 내보내기 완료: ${filePath}\n컬럼 ${counts.columns}건, 매핑 ${counts.mappings}건, 테이블추천 ${counts.tables}건`,
+        text: `Cache export complete: ${filePath}\n${counts.columns} columns, ${counts.mappings} mappings, ${counts.tables} table recommendations`,
       },
     ],
   };

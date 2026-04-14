@@ -140,7 +140,7 @@ export class MetadataCache {
     const colCount = Object.keys(this.data.columns).length;
     const mapCount = Object.keys(this.data.mappings).length;
     const tblCount = Object.keys(this.data.tables).length;
-    return `캐시 현황: 컬럼 ${colCount}건, 매핑 ${mapCount}건, 테이블추천 ${tblCount}건`;
+    return `Cache summary: ${colCount} columns, ${mapCount} mappings, ${tblCount} table recommendations`;
   }
 
   // --- Export / Import ---

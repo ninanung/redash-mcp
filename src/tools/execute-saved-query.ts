@@ -39,7 +39,7 @@ export async function handleExecuteSavedQuery(
   );
 
   const notesText = truncated
-    ? `\n\n주의: 전체 ${data.rows.length}행 중 앞 ${maxRows}행만 반환했습니다. max_rows를 늘리거나 필요한 경우 execute_query로 LIMIT을 조정해 다시 실행하세요.`
+    ? `\n\nNote: Returned the first ${maxRows} of ${data.rows.length} rows. Increase max_rows or rerun via execute_query with an adjusted LIMIT if you need more.`
     : "";
 
   return {
@@ -47,7 +47,7 @@ export async function handleExecuteSavedQuery(
       { type: "text", text: resultJson },
       {
         type: "text",
-        text: `실행된 저장 쿼리 #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${notesText}`,
+        text: `Executed saved query #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${notesText}`,
       },
     ],
   };

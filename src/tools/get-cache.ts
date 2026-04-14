@@ -19,16 +19,16 @@ export async function handleGetCache(
   // 컬럼 캐시 검색
   const columns = metadataCache.searchColumns(keyword);
   if (Object.keys(columns).length > 0) {
-    output.push("## 컬럼 정보");
+    output.push("## Columns");
     for (const [key, info] of Object.entries(columns)) {
       const typeHint =
         info.type === "integer"
-          ? "integer (숫자 리터럴로 비교)"
-          : "varchar (문자열로 비교)";
+          ? "integer (compare as numeric literal)"
+          : "varchar (compare as string)";
       const staleTag = isStale(info.updatedAt) ? " [stale]" : "";
       output.push(`\n[${key}] (${typeHint}) — ${info.updatedAt}${staleTag}`);
       for (const v of info.values) {
-        output.push(`  ${v.val} : ${v.cnt.toLocaleString()}건`);
+        output.push(`  ${v.val} : ${v.cnt.toLocaleString()} rows`);
       }
     }
   }
@@ -36,7 +36,7 @@ export async function handleGetCache(
   // 매핑 캐시 검색
   const mappings = metadataCache.searchMappings(keyword);
   if (Object.keys(mappings).length > 0) {
-    output.push("\n## 매핑 정보");
+    output.push("\n## Mappings");
     for (const [key, info] of Object.entries(mappings)) {
       const header = Object.keys(info.entries[0] ?? {}).join(" | ");
       const rows = info.entries.map((r) => Object.values(r).join(" | "));
@@ -51,7 +51,7 @@ export async function handleGetCache(
   // 테이블 추천 검색
   const recs = metadataCache.searchTableRecommendations(keyword);
   if (Object.keys(recs).length > 0) {
-    output.push("\n## 테이블 추천");
+    output.push("\n## Table recommendations");
     for (const [key, rec] of Object.entries(recs)) {
       const staleTag = isStale(rec.updatedAt) ? " [stale]" : "";
       output.push(
@@ -59,7 +59,7 @@ export async function handleGetCache(
       );
       if (rec.avoid) {
         for (const [t, reason] of Object.entries(rec.avoid)) {
-          output.push(`  ⚠ 비추천: ${t} — ${reason}`);
+          output.push(`  ⚠ avoid: ${t} — ${reason}`);
         }
       }
     }
@@ -70,7 +70,7 @@ export async function handleGetCache(
       content: [
         {
           type: "text",
-          text: `"${keyword}"와 일치하는 캐시가 없습니다.\n${metadataCache.getSummary()}`,
+          text: `No cache entries match "${keyword}".\n${metadataCache.getSummary()}`,
         },
       ],
     };

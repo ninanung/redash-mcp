@@ -32,7 +32,7 @@ export class ClientRegistry {
     if (!ctx) {
       const available = Array.from(this.instances.keys()).join(", ");
       throw new Error(
-        `Unknown Redash instance: "${key}". 사용 가능한 인스턴스: ${available}`
+        `Unknown Redash instance: "${key}". Available instances: ${available}`
       );
     }
     return ctx;
@@ -48,13 +48,13 @@ export function buildRegistryFromEnv(): ClientRegistry {
   if (raw) {
     const parsed = JSON.parse(raw) as InstanceConfig[];
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      throw new Error("REDASH_INSTANCES는 비어있지 않은 배열이어야 합니다.");
+      throw new Error("REDASH_INSTANCES must be a non-empty array.");
     }
     const registry = new ClientRegistry(parsed[0].name);
     for (const cfg of parsed) {
       if (!cfg.name || !cfg.url || !cfg.api_key) {
         throw new Error(
-          `REDASH_INSTANCES 항목에 name/url/api_key가 모두 필요합니다: ${JSON.stringify(cfg)}`
+          `Each REDASH_INSTANCES entry requires name/url/api_key: ${JSON.stringify(cfg)}`
         );
       }
       registry.add(
@@ -71,7 +71,7 @@ export function buildRegistryFromEnv(): ClientRegistry {
   const apiKey = process.env.REDASH_API_KEY;
   if (!url || !apiKey) {
     throw new Error(
-      "REDASH_INSTANCES 또는 REDASH_URL/REDASH_API_KEY 환경변수가 필요합니다."
+      "REDASH_INSTANCES or REDASH_URL/REDASH_API_KEY environment variables are required."
     );
   }
 

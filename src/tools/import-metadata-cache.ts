@@ -13,7 +13,7 @@ export async function handleImportMetadataCache(
     content: [
       {
         type: "text",
-        text: `캐시 가져오기 완료 (${effectiveMode}): ${filePath}\n추가된 항목 — 컬럼 ${counts.columns}건, 매핑 ${counts.mappings}건, 테이블추천 ${counts.tables}건`,
+        text: `Cache import complete (${effectiveMode}): ${filePath}\nAdded — ${counts.columns} columns, ${counts.mappings} mappings, ${counts.tables} table recommendations`,
       },
     ],
   };

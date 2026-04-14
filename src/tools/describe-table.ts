@@ -24,7 +24,7 @@ export async function handleDescribeTable(
       content: [
         {
           type: "text",
-          text: `테이블을 찾을 수 없습니다: ${table}. get_schema로 이름을 확인해주세요.`,
+          text: `Table not found: ${table}. Check the name with get_schema.`,
         },
       ],
       isError: true,
@@ -60,7 +60,7 @@ export async function handleDescribeTable(
       { type: "text", text: JSON.stringify(body, null, 2) },
       {
         type: "text",
-        text: `샘플 쿼리:\n\`\`\`sql\n${sql}\n\`\`\``,
+        text: `Sample query:\n\`\`\`sql\n${sql}\n\`\`\``,
       },
     ],
   };
