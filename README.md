@@ -67,6 +67,7 @@ Restart Claude Code to activate the MCP tools.
 | `REDASH_MCP_LOG` | (optional) Log level: `debug`, `info` (default), `warn`, `error`, `silent`. Logs go to stderr to avoid corrupting the MCP stdio channel. |
 | `REDASH_MCP_AUDIT_LOG` | (optional) Audit log file path. Defaults to `~/.redash-mcp/audit.log`. Set to `off` to disable. Each line is a JSON record with tool name, args, duration, status. |
 | `REDASH_QUERY_TIMEOUT_MS` | (optional) Default query timeout in ms (default 120000). Override per-call via `execute_query`'s `timeout_ms` argument. |
+| `REDASH_MASK_COLUMNS` | (optional) Column-name patterns to mask in result rows (comma-separated, `*` wildcard supported). Include `builtin` to also mask common PII columns (email, phone, SSN/RRN, password, token, card). Example: `builtin,user_name,addr*` |
 | `REDASH_METADATA_TTL_DAYS` | (optional) Metadata cache TTL in days. When set, entries older than this are treated as cache misses by `explore_column` / `find_mapping` / `get_schema` and are re-fetched; `get_cache` output tags them `[stale]`. Unset = keep forever. |
 
 ## Tools

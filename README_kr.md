@@ -67,6 +67,7 @@ npm run build
 | `REDASH_MCP_LOG` | (선택) 로그 레벨: `debug`, `info`(기본), `warn`, `error`, `silent`. MCP stdio 채널을 해치지 않도록 로그는 stderr로 출력됩니다. |
 | `REDASH_MCP_AUDIT_LOG` | (선택) 감사 로그 파일 경로. 기본값 `~/.redash-mcp/audit.log`. `off`로 설정 시 비활성화. 각 줄은 도구명·인자·수행시간·상태를 담은 JSON 레코드. |
 | `REDASH_QUERY_TIMEOUT_MS` | (선택) 기본 쿼리 타임아웃(ms, 기본 120000). `execute_query`의 `timeout_ms` 인자로 호출 단위 재정의 가능. |
+| `REDASH_MASK_COLUMNS` | (선택) 결과에서 마스킹할 컬럼명 패턴(콤마 구분, 와일드카드 `*` 지원). `builtin`을 포함하면 이메일·전화·주민번호·패스워드·토큰·카드 등 내장 패턴도 자동 마스킹됩니다. 예: `builtin,user_name,addr*` |
 | `REDASH_METADATA_TTL_DAYS` | (선택) 메타데이터 캐시 TTL(일). 설정 시 해당 일수 이상 된 항목은 `explore_column`·`find_mapping`·`get_schema`에서 캐시 미스로 간주하여 재조회하고, `get_cache` 출력에 `[stale]` 태그가 표시됩니다. 미설정 시 무기한 유지. |
 
 ## 도구

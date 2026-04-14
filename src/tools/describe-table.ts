@@ -1,5 +1,6 @@
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
+import { getMaskedColumns, maskRow } from "@/masking.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { DescribeTableArgs } from "@/interfaces/tool-args.js";
 
@@ -38,6 +39,10 @@ export async function handleDescribeTable(
   try {
     const result = await client.executeAdhocQuery(sql, dataSourceId);
     sampleRows = result.query_result.data.rows;
+    const maskedCols = getMaskedColumns(target.columns);
+    if (maskedCols.length > 0) {
+      sampleRows = sampleRows.map((r) => maskRow(r, target.columns));
+    }
   } catch (err) {
     sampleError = client.formatError(err);
   }

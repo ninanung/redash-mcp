@@ -1,4 +1,5 @@
 import { RedashClient } from "@/redash-client.js";
+import { getMaskedColumns, maskRow } from "@/masking.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteSavedQueryArgs } from "@/interfaces/tool-args.js";
 
@@ -15,7 +16,12 @@ export async function handleExecuteSavedQuery(
   const result = await client.executeSavedQuery(queryId, parameters);
   const data = result.query_result.data;
 
-  const rows = data.rows.slice(0, maxRows);
+  const columnNames = data.columns.map((c) => c.name);
+  const maskedCols = getMaskedColumns(columnNames);
+  let rows = data.rows.slice(0, maxRows);
+  if (maskedCols.length > 0) {
+    rows = rows.map((r) => maskRow(r, columnNames));
+  }
   const truncated = data.rows.length > maxRows;
 
   const resultJson = JSON.stringify(

@@ -3,6 +3,7 @@ import * as path from "path";
 import { RedashClient } from "@/redash-client.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { validateReadOnlySql } from "@/sql-guard.js";
+import { getMaskedColumns, maskRow } from "@/masking.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
 import type { RedashColumn } from "@/interfaces/redash-client.js";
@@ -91,8 +92,17 @@ export async function handleExecuteQuery(
     });
     const data = result.query_result.data;
 
+    const columnNames = data.columns.map((c) => c.name);
+    const maskedCols = getMaskedColumns(columnNames);
+    if (maskedCols.length > 0) {
+      data.rows = data.rows.map((r) => maskRow(r, columnNames));
+    }
+
     const truncated = data.rows.length >= maxRows;
     const notes: string[] = [];
+    if (maskedCols.length > 0) {
+      notes.push(`마스킹된 컬럼: ${maskedCols.join(", ")}`);
+    }
     if (limitInjected) {
       notes.push(`LIMIT ${maxRows}을 자동 주입했습니다.`);
     }
