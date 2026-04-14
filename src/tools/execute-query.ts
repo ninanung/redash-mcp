@@ -33,9 +33,10 @@ function hasLimitClause(sql: string): boolean {
   return /\blimit\s+\d+/i.test(stripped);
 }
 
-function injectLimit(sql: string, limit: number): string {
+function injectLimit(sql: string, limit: number, offset?: number): string {
   const trimmed = sql.trim().replace(/;+\s*$/, "");
-  return `${trimmed}\nLIMIT ${limit}`;
+  const offsetClause = offset && offset > 0 ? ` OFFSET ${offset}` : "";
+  return `${trimmed}\nLIMIT ${limit}${offsetClause}`;
 }
 
 function toCsvValue(v: unknown): string {
@@ -74,6 +75,7 @@ export async function handleExecuteQuery(
     save_csv: saveCsv,
     timeout_ms: timeoutMs,
     summarize = "auto",
+    offset,
   } = args;
 
   const guard = validateReadOnlySql(query);
@@ -86,7 +88,19 @@ export async function handleExecuteQuery(
 
   const maxRows = maxRowsArg ?? DEFAULT_MAX_ROWS;
   const limitInjected = !hasLimitClause(query);
-  const effectiveQuery = limitInjected ? injectLimit(query, maxRows) : query;
+  const effectiveQuery = limitInjected ? injectLimit(query, maxRows, offset) : query;
+
+  if (!limitInjected && offset && offset > 0) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: "쿼리에 이미 LIMIT 절이 있어 offset 인자가 무시됩니다. LIMIT/OFFSET을 SQL에 직접 지정하거나 LIMIT을 제거하고 max_rows/offset을 사용하세요.",
+        },
+      ],
+      isError: true,
+    };
+  }
 
   try {
     const result = await client.executeAdhocQuery(effectiveQuery, dataSourceId, {

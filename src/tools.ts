@@ -113,6 +113,11 @@ export function getToolDefinitions(): ToolDefinition[] {
             description:
               "쿼리 실행 타임아웃(ms). 기본 120000. REDASH_QUERY_TIMEOUT_MS 환경변수로도 조정 가능.",
           },
+          offset: {
+            type: "number",
+            description:
+              "페이지네이션용 OFFSET. LIMIT 자동 주입 시에만 적용됩니다(쿼리에 직접 LIMIT이 있으면 에러). ORDER BY 없이 사용 시 결과 순서가 보장되지 않으니 주의.",
+          },
           summarize: {
             type: "string",
             enum: ["auto", "always", "never"],
