@@ -16,7 +16,7 @@ export async function handleFindMapping(
 
   // 캐시 확인
   if (!refresh) {
-    const hit = metadataCache.getMapping(cacheKey);
+    const hit = metadataCache.getMapping(dataSourceId, cacheKey);
     if (hit) {
       const header = Object.keys(hit.entries[0] ?? {}).join(" | ");
       const rows = hit.entries.map((r) => Object.values(r).join(" | "));
@@ -109,7 +109,7 @@ export async function handleFindMapping(
     return entry;
   });
 
-  metadataCache.setMapping(cacheKey, {
+  metadataCache.setMapping(dataSourceId, cacheKey, {
     mappingTable,
     entries,
     updatedAt: new Date().toISOString().slice(0, 10),

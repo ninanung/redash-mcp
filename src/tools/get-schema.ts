@@ -16,7 +16,7 @@ export async function handleGetSchema(
   const recommendations: string[] = [];
   if (keywords && keywords.length > 0 && !refresh) {
     for (const kw of keywords) {
-      const rec = metadataCache.getTableRecommendation(kw);
+      const rec = metadataCache.getTableRecommendation(dataSourceId, kw);
       if (rec) {
         const avoidInfo = rec.avoid
           ? Object.entries(rec.avoid)

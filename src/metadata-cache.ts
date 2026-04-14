@@ -16,6 +16,10 @@ import type {
 const CACHE_DIR = path.join(os.homedir(), ".redash-mcp");
 const CACHE_FILE = path.join(CACHE_DIR, "metadata-cache.json");
 
+function dsKey(dataSourceId: number, key: string): string {
+  return `ds${dataSourceId}:${key}`;
+}
+
 export class MetadataCache {
   private data: CacheData;
 
@@ -25,52 +29,56 @@ export class MetadataCache {
 
   // --- Column cache ---
 
-  getColumn(key: string): ColumnInfo | null {
-    return this.data.columns[key] ?? null;
+  getColumn(dataSourceId: number, key: string): ColumnInfo | null {
+    return this.data.columns[dsKey(dataSourceId, key)] ?? null;
   }
 
-  setColumn(key: string, info: ColumnInfo): void {
-    this.data.columns[key] = info;
+  setColumn(dataSourceId: number, key: string, info: ColumnInfo): void {
+    this.data.columns[dsKey(dataSourceId, key)] = info;
     this.save();
   }
 
-  deleteColumn(key: string): void {
-    delete this.data.columns[key];
+  deleteColumn(dataSourceId: number, key: string): void {
+    delete this.data.columns[dsKey(dataSourceId, key)];
     this.save();
   }
 
   // --- Mapping cache ---
 
-  getMapping(key: string): MappingInfo | null {
-    return this.data.mappings[key] ?? null;
+  getMapping(dataSourceId: number, key: string): MappingInfo | null {
+    return this.data.mappings[dsKey(dataSourceId, key)] ?? null;
   }
 
-  setMapping(key: string, info: MappingInfo): void {
-    this.data.mappings[key] = info;
+  setMapping(dataSourceId: number, key: string, info: MappingInfo): void {
+    this.data.mappings[dsKey(dataSourceId, key)] = info;
     this.save();
   }
 
-  deleteMapping(key: string): void {
-    delete this.data.mappings[key];
+  deleteMapping(dataSourceId: number, key: string): void {
+    delete this.data.mappings[dsKey(dataSourceId, key)];
     this.save();
   }
 
   // --- Table recommendation cache ---
 
-  getTableRecommendation(keyword: string): TableRecommendation | null {
-    return this.data.tables[keyword.toLowerCase()] ?? null;
+  getTableRecommendation(
+    dataSourceId: number,
+    keyword: string
+  ): TableRecommendation | null {
+    return this.data.tables[dsKey(dataSourceId, keyword.toLowerCase())] ?? null;
   }
 
   setTableRecommendation(
+    dataSourceId: number,
     keyword: string,
     rec: TableRecommendation
   ): void {
-    this.data.tables[keyword.toLowerCase()] = rec;
+    this.data.tables[dsKey(dataSourceId, keyword.toLowerCase())] = rec;
     this.save();
   }
 
-  deleteTableRecommendation(keyword: string): void {
-    delete this.data.tables[keyword.toLowerCase()];
+  deleteTableRecommendation(dataSourceId: number, keyword: string): void {
+    delete this.data.tables[dsKey(dataSourceId, keyword.toLowerCase())];
     this.save();
   }
 

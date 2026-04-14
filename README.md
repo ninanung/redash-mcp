@@ -125,7 +125,7 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 ## Cache
 
 - **Schema cache**: in-memory, kept alive while the server runs. Refreshed automatically when a query execution hits a table/column error. Manual refresh is available via `refresh: true` on `get_schema`.
-- **Metadata cache**: persisted to `~/.redash-mcp/metadata-cache.json`. Results from `explore_column` and `find_mapping` are stored automatically and reused on subsequent lookups.
+- **Metadata cache**: persisted to `~/.redash-mcp/metadata-cache.json`. Results from `explore_column` and `find_mapping` are stored automatically and reused on subsequent lookups. Keys are prefixed with `ds<id>:` so the same table name in different data sources never collides.
 
 ### Cache Location & Reset
 

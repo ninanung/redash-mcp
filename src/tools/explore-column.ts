@@ -17,7 +17,7 @@ export async function handleExploreColumn(
 
   for (const c of columns) {
     const key = `${c.table}.${c.column}`;
-    const hit = !refresh ? metadataCache.getColumn(key) : null;
+    const hit = !refresh ? metadataCache.getColumn(dataSourceId, key) : null;
     if (hit) {
       cached.push(key);
     } else {
@@ -29,7 +29,7 @@ export async function handleExploreColumn(
   const output: string[] = [];
 
   for (const key of cached) {
-    const info = metadataCache.getColumn(key)!;
+    const info = metadataCache.getColumn(dataSourceId, key)!;
     const typeHint =
       info.type === "integer"
         ? "integer (숫자 리터럴로 비교)"
@@ -76,7 +76,7 @@ export async function handleExploreColumn(
       }
 
       // 캐시 저장
-      metadataCache.setColumn(col, {
+      metadataCache.setColumn(dataSourceId, col, {
         type: colType,
         values,
         updatedAt: new Date().toISOString().slice(0, 10),

@@ -125,7 +125,7 @@ npm run build
 ## 캐시
 
 - **스키마 캐시**: 인메모리, 서버가 살아있는 동안 유지. 쿼리 실행 시 테이블/컬럼 에러가 발생하면 자동 갱신. `get_schema`의 `refresh: true`로 수동 갱신도 가능
-- **메타데이터 캐시**: `~/.redash-mcp/metadata-cache.json`에 영구 저장. `explore_column`, `find_mapping` 결과를 자동 저장하여 반복 조회 시 활용
+- **메타데이터 캐시**: `~/.redash-mcp/metadata-cache.json`에 영구 저장. `explore_column`, `find_mapping` 결과를 자동 저장하여 반복 조회 시 활용. 키가 `ds<id>:` 프리픽스로 격리되므로 다른 데이터소스에 같은 이름의 테이블이 있어도 충돌하지 않습니다.
 
 ### 캐시 위치 및 초기화
 
