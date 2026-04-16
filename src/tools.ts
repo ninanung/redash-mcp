@@ -151,7 +151,7 @@ export function getToolDefinitions(): ToolDefinition[] {
                 partition_filter: {
                   type: "string",
                   description:
-                    "Partition filter (e.g. p_ymd = '20260413'). Required for large tables.",
+                    "Partition filter (e.g. partition_col = 'value'). Required for large tables.",
                 },
               },
               required: ["table", "column"],
@@ -246,7 +246,7 @@ export function getToolDefinitions(): ToolDefinition[] {
           partition_filter: {
             type: "string",
             description:
-              "Partition filter (e.g. p_ymd = '20260413'). Required for large tables.",
+              "Partition filter (e.g. partition_col = 'value'). Required for large tables.",
           },
           columns: {
             type: "array",
@@ -271,11 +271,11 @@ export function getToolDefinitions(): ToolDefinition[] {
           table: {
             type: "string",
             description:
-              "Source table that contains the code column (e.g. bh_idusme.order_total)",
+              "Source table that contains the code column (e.g. schema.table_name)",
           },
           column: {
             type: "string",
-            description: "Code column name (e.g. lastest_state)",
+            description: "Code column name (e.g. status_code)",
           },
         },
         required: ["data_source_id", "table", "column"],
@@ -443,7 +443,7 @@ export function getToolDefinitions(): ToolDefinition[] {
           keyword: {
             type: "string",
             description:
-              "Search keyword (e.g. 'membership', 'order_total.lastest_state'). If omitted, returns full summary.",
+              "Search keyword (e.g. 'table_name', 'table_name.column_name'). If omitted, returns full summary.",
           },
         },
       },
