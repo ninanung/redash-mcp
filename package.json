@@ -14,6 +14,14 @@
   ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ninanung/redash-mcp.git"
+  },
+  "homepage": "https://github.com/ninanung/redash-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/ninanung/redash-mcp/issues"
+  },
   "bin": {
     "redash-mcp": "./dist/cli.js"
   },
