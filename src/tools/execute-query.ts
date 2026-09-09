@@ -5,6 +5,16 @@ import { SchemaCache } from "@/schema-cache.js";
 import { validateReadOnlySql } from "@/sql-guard.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
 import { computeSummary, summarizeThreshold } from "@/summarize.js";
+import { defaultMaxRows, formatResult, resolveFormat } from "@/result-format.js";
+import {
+  extractMissingColumn,
+  extractMissingTable,
+  extractReferencedTables,
+  findTablesInSchema,
+  formatColumnHint,
+  formatTableHint,
+  suggestSimilarTables,
+} from "@/schema-hints.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteQueryArgs } from "@/interfaces/tool-args.js";
 import type { RedashColumn } from "@/interfaces/redash-client.js";
@@ -14,11 +24,12 @@ const SCHEMA_ERROR_PATTERNS = [
   /column.*not found/i,
   /table.*does not exist/i,
   /column.*does not exist/i,
+  /table.*doesn't exist/i,
   /unknown table/i,
   /unknown column/i,
+  /cannot be resolved/i,
+  /no such (?:table|column)/i,
 ];
-
-const DEFAULT_MAX_ROWS = 1000;
 
 function isSchemaError(message: string): boolean {
   return SCHEMA_ERROR_PATTERNS.some((pattern) => pattern.test(message));
@@ -76,7 +87,9 @@ export async function handleExecuteQuery(
     timeout_ms: timeoutMs,
     summarize = "auto",
     offset,
+    format: formatArg,
   } = args;
+  const format = resolveFormat(formatArg);
 
   const guard = validateReadOnlySql(query);
   if (!guard.ok) {
@@ -86,7 +99,7 @@ export async function handleExecuteQuery(
     };
   }
 
-  const maxRows = maxRowsArg ?? DEFAULT_MAX_ROWS;
+  const maxRows = maxRowsArg ?? defaultMaxRows();
   const limitInjected = !hasLimitClause(query);
   const effectiveQuery = limitInjected ? injectLimit(query, maxRows, offset) : query;
 
@@ -124,7 +137,7 @@ export async function handleExecuteQuery(
     }
     if (truncated) {
       notes.push(
-        `Result reached ${maxRows} rows and may have been truncated. Increase max_rows or specify LIMIT directly in the query for more rows.`
+        `Returned the first ${maxRows} rows; the full result may be larger. Narrow the query, increase max_rows, or specify LIMIT directly for more rows.`
       );
     }
 
@@ -163,19 +176,10 @@ export async function handleExecuteQuery(
         );
       }
     } else {
-      resultJson = JSON.stringify(
-        {
-          columns: data.columns.map((c) => ({
-            name: c.name,
-            type: c.type,
-          })),
-          rows: data.rows,
-          row_count: data.rows.length,
-          runtime: result.query_result.runtime,
-        },
-        null,
-        2
-      );
+      resultJson = formatResult(format, data.columns, data.rows, {
+        row_count: data.rows.length,
+        runtime: result.query_result.runtime,
+      });
     }
 
     const notesText = notes.length > 0 ? `\n\nNotes:\n- ${notes.join("\n- ")}` : "";
@@ -207,11 +211,44 @@ export async function handleExecuteQuery(
       };
     }
 
-    if (isSchemaError(message) && schemaCache.isCached(dataSourceId)) {
+    if (isSchemaError(message)) {
       schemaCache.invalidate(dataSourceId);
       const refreshed = await schemaCache.getSchema(client, dataSourceId);
-      const tableNames = schemaCache.getTableNames(refreshed);
 
+      const missingColumn = extractMissingColumn(message);
+      if (missingColumn) {
+        const referenced = findTablesInSchema(
+          refreshed,
+          extractReferencedTables(effectiveQuery)
+        );
+        if (referenced.length > 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Query failed: ${message}\n\n${formatColumnHint(missingColumn, referenced)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      const missingTable = extractMissingTable(message);
+      if (missingTable) {
+        const suggestions = suggestSimilarTables(refreshed, missingTable);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Query failed: ${message}\n\n${formatTableHint(missingTable, suggestions, refreshed.length)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const tableNames = schemaCache.getTableNames(refreshed);
       return {
         content: [
           {

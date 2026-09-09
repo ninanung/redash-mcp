@@ -5,6 +5,7 @@ export type {
   RedashDataSource,
   RedashSchemaTable,
   RedashSavedQuery,
+  RedashQueryParameter,
 } from "@/interfaces/redash-client.js";
 import type {
   RedashQueryResult,
@@ -61,10 +62,18 @@ export class RedashClient {
     return res.data;
   }
 
-  async getSchema(dataSourceId: number): Promise<RedashSchemaTable[]> {
+  /**
+   * Fetch the schema. With refresh=true Redash is asked to rebuild its own
+   * server-side schema cache, which is what picks up newly created tables.
+   */
+  async getSchema(
+    dataSourceId: number,
+    refresh = false
+  ): Promise<RedashSchemaTable[]> {
     this.assertDataSourceAllowed(dataSourceId);
     const res = await this.client.get<RedashSchemaResponse>(
-      `/api/data_sources/${dataSourceId}/schema`
+      `/api/data_sources/${dataSourceId}/schema`,
+      refresh ? { params: { refresh: true } } : undefined
     );
     return res.data.schema ?? [];
   }
@@ -241,17 +250,24 @@ export class RedashClient {
   }
 
   formatError(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        const data = error.response.data as Record<string, unknown>;
-        const msg = data?.message || data?.error || JSON.stringify(data);
-        return `Redash API error (${error.response.status}): ${msg}`;
-      }
-      if (error.request) {
-        return `No response from Redash: ${error.message}`;
-      }
-      return `Request error: ${error.message}`;
-    }
-    return error instanceof Error ? error.message : String(error);
+    return formatRedashError(error);
   }
+}
+
+/** Human-readable error including the Redash response body when available. */
+export function formatRedashError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      const data = error.response.data as Record<string, unknown> | undefined;
+      const body =
+        data?.message ?? data?.error ?? (data === undefined ? "" : JSON.stringify(data));
+      const suffix = body ? `: ${String(body)}` : "";
+      return `Redash API error (${error.response.status})${suffix}`;
+    }
+    if (error.request) {
+      return `No response from Redash: ${error.message}`;
+    }
+    return `Request error: ${error.message}`;
+  }
+  return error instanceof Error ? error.message : String(error);
 }

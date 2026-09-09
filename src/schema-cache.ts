@@ -16,9 +16,13 @@ export class SchemaCache {
       return cached.tables;
     }
 
-    const tables = await client.getSchema(dataSourceId);
-    this.cache.set(dataSourceId, { tables });
+    const tables = await client.getSchema(dataSourceId, forceRefresh);
+    this.cache.set(dataSourceId, { tables, fetchedAt: Date.now() });
     return tables;
+  }
+
+  getEntry(dataSourceId: number): CacheEntry | undefined {
+    return this.cache.get(dataSourceId);
   }
 
   invalidate(dataSourceId: number): void {

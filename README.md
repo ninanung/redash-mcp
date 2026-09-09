@@ -70,6 +70,8 @@ Restart Claude Code to activate the MCP tools.
 | `REDASH_QUERY_TIMEOUT_MS` | (optional) Default query timeout in ms (default 120000). Override per-call via `execute_query`'s `timeout_ms` argument. |
 | `REDASH_SUMMARIZE_THRESHOLD` | (optional) Row count above which `execute_query` auto-summarizes results (per-column min/max/distinct/null + 10 sample rows). Default 500. `save_csv` disables auto mode. Override per call with `summarize:"never"`. |
 | `REDASH_MASK_COLUMNS` | (optional) Column-name patterns to mask in result rows (comma-separated, `*` wildcard supported). Include `builtin` to also mask common PII columns (email, phone, SSN/RRN, password, token, card). Example: `builtin,user_name,addr*` |
+| `REDASH_DEFAULT_FORMAT` | (optional) Default result encoding for `execute_query` / `execute_saved_query`: `json` (default) or `compact`. A per-call `format` argument overrides it. |
+| `REDASH_DEFAULT_MAX_ROWS` | (optional) Default row cap for `execute_query` / `execute_saved_query` when the call passes no `max_rows` (default 1000). |
 | `REDASH_METADATA_TTL_DAYS` | (optional) Metadata cache TTL in days. When set, entries older than this are treated as cache misses by `explore_column` / `find_mapping` / `get_schema` and are re-fetched; `get_cache` output tags them `[stale]`. Unset = keep forever. |
 
 ## Tools
@@ -79,7 +81,7 @@ Restart Claude Code to activate the MCP tools.
 | `list_data_sources` | List available data sources |
 | `self_test` | Diagnostic check — verifies env vars, Redash connectivity, and schema access |
 | `get_schema` | Fetch table/column schema (keyword filter, cached) |
-| `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; job polling handled automatically; auto-injects `LIMIT max_rows` — default 1000 — when the query has none) |
+| `execute_query` | Run SQL (only `SELECT`/`WITH` allowed; job polling handled automatically; auto-injects `LIMIT max_rows` — default 1000 — when the query has none; `format: "compact"` returns rows as arrays at about a quarter of the size) |
 | `explain_query` | Run `EXPLAIN` for a query without executing it — inspect cost / scan plan before a heavy run (engine-specific support) |
 | `explore_column` | Inspect unique values/counts and infer column types (supports multiple columns at once) |
 | `sample_rows` | Return a few raw rows from a table (default 5) to inspect real column values at a glance |
@@ -90,8 +92,8 @@ Restart Claude Code to activate the MCP tools.
 | `save_query` | Save a SQL query to Redash (supports `description` and `tags`) |
 | `update_query` | Update `name`/`query`/`description`/`tags` of an existing saved query |
 | `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |
-| `get_saved_query` | Fetch SQL and metadata of a saved query by ID |
-| `execute_saved_query` | Run a saved query by ID with optional parameters |
+| `get_saved_query` | Fetch SQL and metadata of a saved query by ID, including declared parameters (name, type, stored default, enum choices) and who last saved it |
+| `execute_saved_query` | Run a saved query by ID with optional parameters; omitted parameters fall back to the stored defaults, a `p_` URL-style prefix is stripped, unknown names are rejected with the accepted list, and the result echoes the parameter values actually used |
 | `list_dashboards` | List Redash dashboards (search supported) |
 | `get_dashboard` | Fetch widgets of a dashboard and the query IDs they reference |
 | `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |
@@ -117,7 +119,8 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 - **Read-only SQL**: only statements starting with `SELECT` or `WITH` are allowed. DML/DDL keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`, `MERGE`, `GRANT`, `REVOKE`, `CALL`, `EXEC`, ...) are rejected even if buried inside a CTE. Multiple statements separated by semicolons are also blocked. Comments and string literals are stripped before the scan to prevent keyword-smuggling.
 - **Row-limit guardrail**: `execute_query` auto-injects `LIMIT max_rows` (default 1000) when the query has no LIMIT, preventing accidental full-table scans from blowing up the model context. Override with the `max_rows` argument or include an explicit `LIMIT` in the SQL.
 - **CSV export**: pass `save_csv: "/path/to/out.csv"` to `execute_query` to write the full result to disk instead of (or in addition to) returning it through the model context.
-- **Automatic schema recovery**: if a query fails with a "table/column not found" style error, the schema cache for that data source is invalidated, refreshed, and the updated table list is returned so the model can retry.
+- **Automatic schema recovery**: if a query fails with a "table/column not found" style error, the schema cache for that data source is invalidated and refreshed. For a missing column, the actual columns of the tables referenced in FROM/JOIN are returned; for a missing table, up to 50 similarly named tables are suggested. Either way the model can fix the query in one retry.
+- **Compact output**: `format: "compact"` (or `REDASH_DEFAULT_FORMAT=compact`) encodes `columns`/`column_types` as arrays and `rows` as arrays of values with no indentation. Row caps are announced in the notes ("Returned the first M rows" / "Returned the first M of N rows").
 - **Job polling**: Redash async jobs are polled until completion; only the final result is returned to the client.
 - **No write API**: the server does not expose any endpoint that mutates Redash state other than `save_query` (creating a new saved query).
 
@@ -130,7 +133,7 @@ Subsequent runs reuse the metadata cache, so step 4–5 often short-circuits via
 
 ## Cache
 
-- **Schema cache**: in-memory, kept alive while the server runs. Refreshed automatically when a query execution hits a table/column error. Manual refresh is available via `refresh: true` on `get_schema`.
+- **Schema cache**: in-memory, kept alive while the server runs. Refreshed automatically when a query execution hits a table/column error. Manual refresh is available via `refresh: true` on `get_schema`, which also asks Redash to rebuild its own server-side schema cache (this is what picks up newly created tables). Every `get_schema` response starts with a status line: cached/fresh, table count, and fetch time.
 - **Metadata cache**: persisted to `~/.redash-mcp/metadata-cache.json`. Results from `explore_column` and `find_mapping` are stored automatically and reused on subsequent lookups. Keys are prefixed with `ds<id>:` so the same table name in different data sources never collides.
 
 ### Cache Location & Reset

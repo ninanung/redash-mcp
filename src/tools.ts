@@ -76,7 +76,8 @@ export function getToolDefinitions(): ToolDefinition[] {
           },
           refresh: {
             type: "boolean",
-            description: "If true, bypass cache and refetch",
+            description:
+              "If true, bypass the local cache and ask Redash to rebuild its own schema cache (picks up newly created tables).",
           },
         },
         required: ["data_source_id"],
@@ -85,7 +86,7 @@ export function getToolDefinitions(): ToolDefinition[] {
     {
       name: "execute_query",
       description:
-        "Execute SQL and return results. Async job polling is handled internally. If no LIMIT is present, max_rows (default 1000) is auto-injected.",
+        "Execute SQL and return results. Async job polling is handled internally. If no LIMIT is present, max_rows (default 1000, or REDASH_DEFAULT_MAX_ROWS) is auto-injected. On a missing-column error the actual columns of the referenced tables are returned so the query can be fixed in one retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -100,7 +101,13 @@ export function getToolDefinitions(): ToolDefinition[] {
           max_rows: {
             type: "number",
             description:
-              "Max rows to auto-inject when LIMIT is absent (default 1000). To get the full result, specify LIMIT in the query yourself.",
+              "Max rows to auto-inject when LIMIT is absent (default 1000, or REDASH_DEFAULT_MAX_ROWS). To get the full result, specify LIMIT in the query yourself.",
+          },
+          format: {
+            type: "string",
+            enum: ["json", "compact"],
+            description:
+              "Result encoding. json (default): columns as objects, rows as objects, indented. compact: column names/types as arrays, rows as arrays of values, no indentation (about 1/4 the size). Default can be set via REDASH_DEFAULT_FORMAT.",
           },
           save_csv: {
             type: "string",
@@ -343,7 +350,8 @@ export function getToolDefinitions(): ToolDefinition[] {
     },
     {
       name: "get_saved_query",
-      description: "Fetch SQL and metadata of a saved query.",
+      description:
+        "Fetch SQL and metadata of a saved query, including its declared parameters (name, type, stored default value, enum choices) and who last saved it. Check the stored defaults here before calling execute_saved_query without parameters.",
       inputSchema: {
         type: "object",
         properties: {
@@ -355,19 +363,27 @@ export function getToolDefinitions(): ToolDefinition[] {
     {
       name: "execute_saved_query",
       description:
-        "Execute a saved query and return results. Pass query parameters via parameters.",
+        "Execute a saved query and return results. Pass query parameters via parameters; any parameter not passed falls back to the default stored on the query (see get_saved_query). The result echoes the parameter values actually used.",
       inputSchema: {
         type: "object",
         properties: {
           query_id: { type: "number", description: "Query ID" },
           parameters: {
             type: "object",
-            description: "Query parameters (e.g. { \"date\": \"2026-01-01\" })",
+            description:
+              "Query parameters keyed by the bare parameter name as declared on the saved query (e.g. { \"date\": \"2026-01-01\" }); a \"p_\" URL-style prefix is stripped automatically. Omitted parameters use the stored defaults; unknown names are rejected with the accepted list.",
             additionalProperties: true,
           },
           max_rows: {
             type: "number",
-            description: "Max rows to include (default 1000)",
+            description:
+              "Max rows to include (default 1000, or REDASH_DEFAULT_MAX_ROWS). The response notes how many of the total rows were returned.",
+          },
+          format: {
+            type: "string",
+            enum: ["json", "compact"],
+            description:
+              "Result encoding. json (default): columns as objects, rows as objects, indented. compact: column names/types as arrays, rows as arrays of values, no indentation (about 1/4 the size). Default can be set via REDASH_DEFAULT_FORMAT.",
           },
         },
         required: ["query_id"],

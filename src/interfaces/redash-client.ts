@@ -28,6 +28,35 @@ export interface RedashSchemaTable {
   columns: string[];
 }
 
+export interface RedashQueryParameter {
+  name: string;
+  title?: string;
+  type?: string;
+  /** Default value stored on the saved query. Arrays for multi-value enums, objects for ranges. */
+  value?: unknown;
+  /** Newline-separated choices (type "enum"). */
+  enumOptions?: string;
+  /** Source query id (type "query"). */
+  queryId?: number;
+  multiValuesOptions?: {
+    prefix?: string;
+    suffix?: string;
+    separator?: string;
+  } | null;
+  global?: boolean;
+}
+
+export interface RedashSavedQueryOptions {
+  parameters?: RedashQueryParameter[];
+  apply_auto_limit?: boolean;
+}
+
+export interface RedashUserSummary {
+  id?: number;
+  name?: string;
+  email?: string;
+}
+
 export interface RedashSavedQuery {
   id: number;
   name: string;
@@ -36,6 +65,10 @@ export interface RedashSavedQuery {
   description?: string | null;
   tags?: string[];
   updated_at?: string;
+  options?: RedashSavedQueryOptions | null;
+  /** Present on the detail endpoint only (not in list results). */
+  last_modified_by?: RedashUserSummary | null;
+  user?: RedashUserSummary | null;
 }
 
 export interface RedashSavedQueryListResponse {

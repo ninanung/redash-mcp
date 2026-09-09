@@ -30,7 +30,12 @@ export async function handleGetSchema(
     }
   }
 
+  const wasCached = schemaCache.isCached(dataSourceId);
   const tables = await schemaCache.getSchema(client, dataSourceId, refresh);
+  const entry = schemaCache.getEntry(dataSourceId);
+  const fetchedAt = entry ? new Date(entry.fetchedAt).toISOString() : "unknown";
+  const source = wasCached && !refresh ? "cached" : "fresh";
+  const cacheStatus = `Schema cache: ${source}, ${tables.length} tables, fetched ${fetchedAt}. Pass refresh:true to make Redash rebuild its schema if a table you expect is missing.`;
 
   let filtered = tables;
   if (keywords && keywords.length > 0) {
@@ -42,7 +47,7 @@ export async function handleGetSchema(
       content: [
         {
           type: "text",
-          text: `No matching tables. Out of ${tables.length} tables, none match the keywords.`,
+          text: `${cacheStatus}\n\nNo matching tables. Out of ${tables.length} tables, none match the keywords.`,
         },
       ],
     };
@@ -60,7 +65,7 @@ export async function handleGetSchema(
       content: [
         {
           type: "text",
-          text: `${recPrefix}${filtered.length} tables (names only):\n${names.join("\n")}`,
+          text: `${cacheStatus}\n\n${recPrefix}${filtered.length} tables (names only):\n${names.join("\n")}`,
         },
       ],
     };
@@ -70,14 +75,13 @@ export async function handleGetSchema(
     .map((t) => `${t.name}: ${t.columns.join(", ")}`)
     .join("\n");
 
-  const cached = schemaCache.isCached(dataSourceId);
-  const prefix = cached && !refresh ? "[cached] " : "[fresh] ";
+  const prefix = source === "cached" ? "[cached] " : "[fresh] ";
 
   return {
     content: [
       {
         type: "text",
-        text: `${recPrefix}${prefix}${filtered.length} tables:\n${output}`,
+        text: `${cacheStatus}\n\n${recPrefix}${prefix}${filtered.length} tables:\n${output}`,
       },
     ],
   };

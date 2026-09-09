@@ -8,6 +8,7 @@ import { MetadataCache } from "@/metadata-cache.js";
 import { AuditLog } from "@/audit-log.js";
 import { buildRegistryFromEnv, ClientRegistry } from "@/client-registry.js";
 import { getToolDefinitions, handleToolCall } from "@/tools.js";
+import { formatRedashError } from "@/redash-client.js";
 import { logger } from "@/logger.js";
 
 let registry: ClientRegistry;
@@ -47,7 +48,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     });
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatRedashError(error);
     logger.error(`tool ${name} failed:`, message);
     auditLog.record({
       tool: name,

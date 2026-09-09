@@ -70,6 +70,8 @@ npm run build
 | `REDASH_QUERY_TIMEOUT_MS` | (선택) 기본 쿼리 타임아웃(ms, 기본 120000). `execute_query`의 `timeout_ms` 인자로 호출 단위 재정의 가능. |
 | `REDASH_SUMMARIZE_THRESHOLD` | (선택) `execute_query` 결과가 이 행 수를 넘으면 자동으로 요약(컬럼별 min/max/distinct/null 통계 + 샘플 10행)으로 반환. 기본 500. `save_csv` 지정 시 auto 모드는 요약하지 않음. `summarize:"never"`로 호출 단위 무효화 가능. |
 | `REDASH_MASK_COLUMNS` | (선택) 결과에서 마스킹할 컬럼명 패턴(콤마 구분, 와일드카드 `*` 지원). `builtin`을 포함하면 이메일·전화·주민번호·패스워드·토큰·카드 등 내장 패턴도 자동 마스킹됩니다. 예: `builtin,user_name,addr*` |
+| `REDASH_DEFAULT_FORMAT` | (선택) `execute_query`·`execute_saved_query` 결과 인코딩 기본값: `json`(기본) 또는 `compact`. 호출 인자 `format`이 있으면 그것이 우선. |
+| `REDASH_DEFAULT_MAX_ROWS` | (선택) `execute_query`·`execute_saved_query`에서 `max_rows`를 안 넘겼을 때의 행 상한 기본값 (기본 1000). |
 | `REDASH_METADATA_TTL_DAYS` | (선택) 메타데이터 캐시 TTL(일). 설정 시 해당 일수 이상 된 항목은 `explore_column`·`find_mapping`·`get_schema`에서 캐시 미스로 간주하여 재조회하고, `get_cache` 출력에 `[stale]` 태그가 표시됩니다. 미설정 시 무기한 유지. |
 
 ## 도구
@@ -79,7 +81,7 @@ npm run build
 | `list_data_sources` | 데이터소스 목록 조회 |
 | `self_test` | 진단 도구 — 환경변수·Redash 연결·스키마 조회 가능 여부 점검 |
 | `get_schema` | 테이블/컬럼 스키마 조회 (키워드 필터링, 캐싱) |
-| `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리, LIMIT이 없으면 `max_rows`(기본 1000) 자동 주입) |
+| `execute_query` | SQL 실행 (`SELECT`/`WITH`만 허용, job 폴링 자동 처리, LIMIT이 없으면 `max_rows`(기본 1000) 자동 주입, `format: "compact"`로 rows를 배열로 받아 크기를 약 1/4로 줄일 수 있음) |
 | `explain_query` | 쿼리를 실제 실행하지 않고 `EXPLAIN`으로 비용·계획 조회 (엔진별 지원 상이) |
 | `explore_column` | 컬럼의 고유값/건수 조회 및 타입 추정 (여러 컬럼 동시 탐색) |
 | `sample_rows` | 테이블의 샘플 행 조회 (기본 5행) — 컬럼별 실제 값 형태를 빠르게 파악 |
@@ -90,8 +92,8 @@ npm run build
 | `save_query` | SQL을 Redash에 저장 (`description`·`tags` 지원) |
 | `update_query` | 저장된 쿼리의 `name`·`query`·`description`·`tags` 수정 |
 | `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
-| `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 |
-| `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능) |
+| `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 (선언된 파라미터의 이름·타입·저장된 기본값·enum 선택지, 마지막 저장자 포함) |
+| `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능; 생략한 파라미터는 저장된 기본값 사용, URL식 `p_` 접두는 자동 제거, 선언되지 않은 이름은 허용 목록과 함께 거부, 결과에 실제 사용된 파라미터 값을 함께 표시) |
 | `list_dashboards` | Redash 대시보드 목록 조회 (검색 지원) |
 | `get_dashboard` | 대시보드의 위젯과 참조하는 쿼리 ID 목록 조회 |
 | `get_cache` | 메타데이터 캐시 조회 (컬럼 타입/값, 매핑 테이블, 추천 테이블) |
@@ -117,7 +119,8 @@ npm run build
 - **읽기 전용 SQL**: `SELECT` 또는 `WITH`로 시작하는 쿼리만 허용합니다. `INSERT`·`UPDATE`·`DELETE`·`DROP`·`ALTER`·`CREATE`·`TRUNCATE`·`MERGE`·`GRANT`·`REVOKE`·`CALL`·`EXEC` 등은 CTE 내부에 숨겨도 차단되고, 세미콜론을 이용한 다중 문장도 거부됩니다. 주석과 문자열 리터럴은 스캔 전에 제거되어 키워드 우회를 막습니다.
 - **행 수 가드레일**: `execute_query`는 LIMIT이 없는 쿼리에 `LIMIT max_rows`(기본 1000)를 자동 주입하여, 풀 테이블 스캔으로 모델 컨텍스트가 터지는 사고를 방지합니다. `max_rows` 인자로 조정하거나 SQL에 `LIMIT`을 직접 지정할 수 있습니다.
 - **CSV 저장**: `execute_query`에 `save_csv: "/path/to/out.csv"`를 전달하면 결과를 디스크에 저장합니다. 대용량 결과를 모델 컨텍스트 밖으로 빼낼 때 유용합니다.
-- **자동 스키마 복구**: "table/column not found" 유형의 에러가 발생하면 해당 데이터소스의 스키마 캐시를 무효화·재조회하고, 갱신된 테이블 목록을 반환하여 모델이 다시 시도할 수 있게 합니다.
+- **자동 스키마 복구**: "table/column not found" 유형의 에러가 발생하면 해당 데이터소스의 스키마 캐시를 무효화·재조회합니다. 컬럼 부재면 FROM/JOIN에 참조된 테이블의 실제 컬럼 목록을, 테이블 부재면 이름이 비슷한 테이블을 최대 50개 제안하여 한 번의 재시도로 고칠 수 있게 합니다.
+- **압축 출력**: `format: "compact"`(또는 `REDASH_DEFAULT_FORMAT=compact`)이면 `columns`·`column_types`를 배열로, `rows`를 값 배열의 배열로 들여쓰기 없이 내보냅니다. 행 상한에 걸리면 notes에 "Returned the first M rows" / "Returned the first M of N rows"로 표시됩니다.
 - **Job 폴링**: Redash의 비동기 job을 완료까지 폴링한 뒤 최종 결과만 클라이언트에 전달합니다.
 - **쓰기 API 없음**: Redash 상태를 변경하는 도구는 `save_query`(새 쿼리 저장)뿐입니다.
 
@@ -130,7 +133,7 @@ npm run build
 
 ## 캐시
 
-- **스키마 캐시**: 인메모리, 서버가 살아있는 동안 유지. 쿼리 실행 시 테이블/컬럼 에러가 발생하면 자동 갱신. `get_schema`의 `refresh: true`로 수동 갱신도 가능
+- **스키마 캐시**: 인메모리, 서버가 살아있는 동안 유지. 쿼리 실행 시 테이블/컬럼 에러가 발생하면 자동 갱신. `get_schema`의 `refresh: true`로 수동 갱신도 가능하며, 이때 Redash 서버 쪽 스키마 캐시도 함께 재빌드를 요청한다 (새로 만든 테이블은 이걸로 잡힌다). `get_schema` 응답 첫 줄에 캐시 상태(cached/fresh)·테이블 수·조회 시각이 표시된다
 - **메타데이터 캐시**: `~/.redash-mcp/metadata-cache.json`에 영구 저장. `explore_column`, `find_mapping` 결과를 자동 저장하여 반복 조회 시 활용. 키가 `ds<id>:` 프리픽스로 격리되므로 다른 데이터소스에 같은 이름의 테이블이 있어도 충돌하지 않습니다.
 
 ### 캐시 위치 및 초기화

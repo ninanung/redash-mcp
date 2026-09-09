@@ -1,3 +1,5 @@
+import type { ResultFormat } from "@/interfaces/result-format.js";
+
 type ToolArgs = Record<string, unknown>;
 
 export interface GetSchemaArgs extends ToolArgs {
@@ -14,6 +16,7 @@ export interface ExecuteQueryArgs extends ToolArgs {
   timeout_ms?: number;
   summarize?: "auto" | "always" | "never";
   offset?: number;
+  format?: ResultFormat;
 }
 
 export interface ExploreColumnArgs extends ToolArgs {
@@ -84,6 +87,7 @@ export interface ExecuteSavedQueryArgs extends ToolArgs {
   query_id: number;
   parameters?: Record<string, unknown>;
   max_rows?: number;
+  format?: ResultFormat;
 }
 
 export interface SampleRowsArgs extends ToolArgs {
