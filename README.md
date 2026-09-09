@@ -72,6 +72,7 @@ Restart Claude Code to activate the MCP tools.
 | `REDASH_MASK_COLUMNS` | (optional) Column-name patterns to mask in result rows (comma-separated, `*` wildcard supported). Include `builtin` to also mask common PII columns (email, phone, SSN/RRN, password, token, card). Example: `builtin,user_name,addr*` |
 | `REDASH_DEFAULT_FORMAT` | (optional) Default result encoding for `execute_query` / `execute_saved_query`: `json` (default) or `compact`. A per-call `format` argument overrides it. |
 | `REDASH_DEFAULT_MAX_ROWS` | (optional) Default row cap for `execute_query` / `execute_saved_query` when the call passes no `max_rows` (default 1000). |
+| `REDASH_RESULT_HINTS` | (optional) Set to `off` to drop the trailing LLM guidance from query results ("IMPORTANT: include the executed SQL verbatim…", "To save this query, use save_query…"). Default: on. Useful when your own prompt governs presentation or `save_query` is not exposed. |
 | `REDASH_METADATA_TTL_DAYS` | (optional) Metadata cache TTL in days. When set, entries older than this are treated as cache misses by `explore_column` / `find_mapping` / `get_schema` and are re-fetched; `get_cache` output tags them `[stale]`. Unset = keep forever. |
 
 ## Tools
@@ -93,7 +94,7 @@ Restart Claude Code to activate the MCP tools.
 | `update_query` | Update `name`/`query`/`description`/`tags` of an existing saved query |
 | `list_saved_queries` | List queries already saved in Redash (supports search + data source filter) |
 | `get_saved_query` | Fetch SQL and metadata of a saved query by ID, including declared parameters (name, type, stored default, enum choices) and who last saved it |
-| `execute_saved_query` | Run a saved query by ID with optional parameters; omitted parameters fall back to the stored defaults, a `p_` URL-style prefix is stripped, unknown names are rejected with the accepted list, and the result echoes the parameter values actually used |
+| `execute_saved_query` | Run a saved query by ID with optional parameters; omitted parameters fall back to the stored defaults, a `p_` URL-style prefix is stripped, values are converted to the declared parameter type (`text` / `number`), unknown names are rejected with the accepted list, and the result echoes the parameter values actually used |
 | `list_dashboards` | List Redash dashboards (search supported) |
 | `get_dashboard` | Fetch widgets of a dashboard and the query IDs they reference |
 | `get_cache` | Read the metadata cache (column types/values, mapping tables, recommended tables) |

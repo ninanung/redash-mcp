@@ -1,4 +1,5 @@
 import { RedashClient } from "@/redash-client.js";
+import { SQL_VERBATIM_HINT, withHints } from "@/result-hints.js";
 import { SchemaCache } from "@/schema-cache.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
 import type { ToolResult } from "@/interfaces/tools.js";
@@ -60,7 +61,7 @@ export async function handleDescribeTable(
       { type: "text", text: JSON.stringify(body, null, 2) },
       {
         type: "text",
-        text: `Sample query:\n\`\`\`sql\n${sql}\n\`\`\`\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.`,
+        text: withHints(`Sample query:\n\`\`\`sql\n${sql}\n\`\`\``, SQL_VERBATIM_HINT),
       },
     ],
   };

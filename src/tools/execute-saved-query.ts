@@ -1,6 +1,7 @@
 import { RedashClient } from "@/redash-client.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
 import {
+  coerceParameterTypes,
   formatEffectiveParameters,
   getSavedParameters,
   normalizeParameters,
@@ -9,6 +10,7 @@ import {
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { ExecuteSavedQueryArgs } from "@/interfaces/tool-args.js";
 import { defaultMaxRows, formatResult, resolveFormat } from "@/result-format.js";
+import { SQL_VERBATIM_WITH_PARAMS_HINT, withHints } from "@/result-hints.js";
 
 export async function handleExecuteSavedQuery(
   args: ExecuteSavedQueryArgs,
@@ -25,7 +27,9 @@ export async function handleExecuteSavedQuery(
 
   const saved = await client.getSavedQuery(queryId);
   const declaredNames = getSavedParameters(saved).map((p) => p.name);
-  const { parameters, renamed, unknown } = normalizeParameters(saved, rawParameters);
+  const normalized = normalizeParameters(saved, rawParameters);
+  const { renamed, unknown } = normalized;
+  const { parameters, coerced } = coerceParameterTypes(saved, normalized.parameters);
 
   if (unknown.length > 0) {
     const accepted =
@@ -84,7 +88,13 @@ export async function handleExecuteSavedQuery(
     renamed.length > 0
       ? `\nNote: renamed ${renamed.map((r) => `${r.from} -> ${r.to}`).join(", ")} (Redash API uses bare parameter names without the "p_" URL prefix).`
       : "";
-  const parametersBlock = parametersText ? `\n\n${parametersText}${renamedText}` : "";
+  const coercedText =
+    coerced.length > 0
+      ? `\nNote: converted ${coerced.map((c) => `${c.name} to ${c.to}`).join(", ")} to match the declared parameter type.`
+      : "";
+  const parametersBlock = parametersText
+    ? `\n\n${parametersText}${renamedText}${coercedText}`
+    : "";
 
   const notesText = truncated
     ? `\n\nNote: Returned the first ${maxRows} of ${data.rows.length} rows. Increase max_rows or rerun via execute_query with an adjusted LIMIT if you need more.`
@@ -95,7 +105,10 @@ export async function handleExecuteSavedQuery(
       { type: "text", text: resultJson },
       {
         type: "text",
-        text: `Executed saved query #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${parametersBlock}${notesText}\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result, and list the parameter values it ran with. Do not omit or paraphrase them.`,
+        text: withHints(
+          `Executed saved query #${queryId} "${saved.name}":\n\`\`\`sql\n${saved.query}\n\`\`\`${parametersBlock}${notesText}`,
+          SQL_VERBATIM_WITH_PARAMS_HINT
+        ),
       },
     ],
   };

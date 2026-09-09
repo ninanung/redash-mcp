@@ -6,6 +6,7 @@ import { validateReadOnlySql } from "@/sql-guard.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
 import { computeSummary, summarizeThreshold } from "@/summarize.js";
 import { defaultMaxRows, formatResult, resolveFormat } from "@/result-format.js";
+import { SAVE_QUERY_HINT, SQL_VERBATIM_HINT, withHints } from "@/result-hints.js";
 import {
   extractMissingColumn,
   extractMissingTable,
@@ -192,7 +193,11 @@ export async function handleExecuteQuery(
         },
         {
           type: "text",
-          text: `Executed SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.\n\nTo save this query to Redash, use the save_query tool (ask the user for confirmation and a name).`,
+          text: withHints(
+            `Executed SQL:\n\`\`\`sql\n${effectiveQuery}\n\`\`\`${notesText}`,
+            SQL_VERBATIM_HINT,
+            SAVE_QUERY_HINT
+          ),
         },
       ],
     };

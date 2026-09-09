@@ -72,6 +72,7 @@ npm run build
 | `REDASH_MASK_COLUMNS` | (선택) 결과에서 마스킹할 컬럼명 패턴(콤마 구분, 와일드카드 `*` 지원). `builtin`을 포함하면 이메일·전화·주민번호·패스워드·토큰·카드 등 내장 패턴도 자동 마스킹됩니다. 예: `builtin,user_name,addr*` |
 | `REDASH_DEFAULT_FORMAT` | (선택) `execute_query`·`execute_saved_query` 결과 인코딩 기본값: `json`(기본) 또는 `compact`. 호출 인자 `format`이 있으면 그것이 우선. |
 | `REDASH_DEFAULT_MAX_ROWS` | (선택) `execute_query`·`execute_saved_query`에서 `max_rows`를 안 넘겼을 때의 행 상한 기본값 (기본 1000). |
+| `REDASH_RESULT_HINTS` | (선택) `off`로 설정하면 쿼리 결과 꼬리의 LLM 안내문("IMPORTANT: 실행 SQL을 그대로 포함하라…", "저장하려면 save_query…")을 제거. 기본 on. 자체 프롬프트로 표현을 통제하거나 `save_query`를 노출하지 않는 소비자용. |
 | `REDASH_METADATA_TTL_DAYS` | (선택) 메타데이터 캐시 TTL(일). 설정 시 해당 일수 이상 된 항목은 `explore_column`·`find_mapping`·`get_schema`에서 캐시 미스로 간주하여 재조회하고, `get_cache` 출력에 `[stale]` 태그가 표시됩니다. 미설정 시 무기한 유지. |
 
 ## 도구
@@ -93,7 +94,7 @@ npm run build
 | `update_query` | 저장된 쿼리의 `name`·`query`·`description`·`tags` 수정 |
 | `list_saved_queries` | Redash에 저장된 쿼리 목록 조회 (검색/데이터소스 필터 지원) |
 | `get_saved_query` | 저장된 쿼리 ID로 SQL·메타데이터 조회 (선언된 파라미터의 이름·타입·저장된 기본값·enum 선택지, 마지막 저장자 포함) |
-| `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능; 생략한 파라미터는 저장된 기본값 사용, URL식 `p_` 접두는 자동 제거, 선언되지 않은 이름은 허용 목록과 함께 거부, 결과에 실제 사용된 파라미터 값을 함께 표시) |
+| `execute_saved_query` | 저장된 쿼리를 ID로 실행 (파라미터 전달 가능; 생략한 파라미터는 저장된 기본값 사용, URL식 `p_` 접두는 자동 제거, 값은 선언된 타입(`text`/`number`)에 맞게 변환, 선언되지 않은 이름은 허용 목록과 함께 거부, 결과에 실제 사용된 파라미터 값을 함께 표시) |
 | `list_dashboards` | Redash 대시보드 목록 조회 (검색 지원) |
 | `get_dashboard` | 대시보드의 위젯과 참조하는 쿼리 ID 목록 조회 |
 | `get_cache` | 메타데이터 캐시 조회 (컬럼 타입/값, 매핑 테이블, 추천 테이블) |

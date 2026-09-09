@@ -467,6 +467,15 @@ export function getToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+function missingRequiredArgs(
+  name: string,
+  args: Record<string, unknown>
+): string[] {
+  const def = getToolDefinitions().find((t) => t.name === name);
+  const required = (def?.inputSchema as { required?: string[] } | undefined)?.required ?? [];
+  return required.filter((key) => args[key] === undefined || args[key] === null);
+}
+
 export async function handleToolCall(
   name: string,
   rawArgs: Record<string, unknown>,
@@ -481,6 +490,22 @@ export async function handleToolCall(
   );
   const client = ctx.client;
   const schemaCache = ctx.schemaCache;
+
+  const missing = missingRequiredArgs(name, args);
+  if (missing.length > 0) {
+    const dsHint = missing.includes("data_source_id")
+      ? " Call list_data_sources to find the data_source_id."
+      : "";
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Missing required argument(s) for ${name}: ${missing.join(", ")}.${dsHint}`,
+        },
+      ],
+      isError: true,
+    };
+  }
 
   switch (name) {
     case "list_data_sources":

@@ -1,4 +1,5 @@
 import { RedashClient } from "@/redash-client.js";
+import { SQL_VERBATIM_HINT, withHints } from "@/result-hints.js";
 import { getMaskedColumns, maskRow } from "@/masking.js";
 import type { ToolResult } from "@/interfaces/tools.js";
 import type { SampleRowsArgs } from "@/interfaces/tool-args.js";
@@ -44,7 +45,7 @@ export async function handleSampleRows(
       { type: "text", text: resultJson },
       {
         type: "text",
-        text: `Executed SQL:\n\`\`\`sql\n${sql}\n\`\`\`\n\nIMPORTANT: When presenting the result to the user, you MUST always include this executed SQL verbatim in a \`\`\`sql code block alongside the result. Do not omit or paraphrase it.`,
+        text: withHints(`Executed SQL:\n\`\`\`sql\n${sql}\n\`\`\``, SQL_VERBATIM_HINT),
       },
     ],
   };

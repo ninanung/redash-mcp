@@ -122,6 +122,47 @@ export function normalizeParameters(
   return { parameters, renamed, unknown };
 }
 
+export interface CoercedParameters {
+  parameters: Record<string, unknown>;
+  /** Keys whose value type was changed to match the declared parameter type. */
+  coerced: Array<{ name: string; to: string }>;
+}
+
+/**
+ * Align passed values with the declared parameter types. Redash rejects a
+ * JSON number for a "text" parameter and a numeric string for a "number"
+ * parameter, and LLM callers routinely send ids as numbers, so text gets
+ * String(value) and number gets Number(value) when the string is numeric.
+ * Other types are passed through untouched.
+ */
+export function coerceParameterTypes(
+  saved: RedashSavedQuery,
+  passed: Record<string, unknown>
+): CoercedParameters {
+  const types = new Map(
+    getSavedParameters(saved).map((p) => [p.name, p.type] as const)
+  );
+  const parameters: Record<string, unknown> = { ...passed };
+  const coerced: CoercedParameters["coerced"] = [];
+
+  for (const [name, value] of Object.entries(passed)) {
+    const type = types.get(name);
+    if (type === "text" && (typeof value === "number" || typeof value === "boolean")) {
+      parameters[name] = String(value);
+      coerced.push({ name, to: "text" });
+    } else if (
+      type === "number" &&
+      typeof value === "string" &&
+      value.trim() !== "" &&
+      Number.isFinite(Number(value))
+    ) {
+      parameters[name] = Number(value);
+      coerced.push({ name, to: "number" });
+    }
+  }
+  return { parameters, coerced };
+}
+
 export function formatEffectiveParameters(
   resolved: ResolvedParameter[]
 ): string | null {
