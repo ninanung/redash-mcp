@@ -10,6 +10,8 @@ Redash API를 MCP(Model Context Protocol) 서버로 제공합니다. 스키마·
 
 ## 설치 및 설정
 
+Node.js 22 이상이 필요합니다. 보안 패치를 계속 받는 릴리스 라인을 사용하세요.
+
 ### npx (설치 불필요)
 
 `~/.mcp.json`에 아래 내용을 추가합니다.

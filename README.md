@@ -10,6 +10,8 @@ Expose the Redash API as an MCP (Model Context Protocol) server. Schema, column 
 
 ## Installation & Setup
 
+Requires Node.js 22 or later. Use a release line that still receives security fixes.
+
 ### npx (no installation required)
 
 Add the following to `~/.mcp.json`.
